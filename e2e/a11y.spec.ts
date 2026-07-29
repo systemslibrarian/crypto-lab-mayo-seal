@@ -28,9 +28,9 @@ async function scan(page: Page, label: string): Promise<void> {
   ).toEqual([]);
 }
 
-/** Exhibit 1, for all three offered parameter sets. */
+/** Exhibit 1, for every offered parameter set. */
 async function driveKeygen(page: Page): Promise<void> {
-  for (const set of ['MAYO1', 'MAYO2', 'TOY']) {
+  for (const set of ['MAYO1', 'MAYO2', 'MAYO3', 'MAYO5', 'TOY']) {
     await page.selectOption('#kg-params', set);
     await page.click('#kg-run');
     await expect(page.locator('#kg-out .verdict').first()).toContainText('keypair derived');

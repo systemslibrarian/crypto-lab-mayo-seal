@@ -24,9 +24,9 @@ where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. 
 
 ## Exhibits
 
-1. **Keygen: a needle small enough to shrink the haystack** — derive a keypair for TOY, MAYO1 or MAYO2 from a seed you choose. Shows what actually ships (a 16-byte seed plus the P⁽³⁾ block), what the verifier expands from that seed instead of downloading, and how much larger the same key would be with the whipping removed. For the toy set it also *computes* the trapdoor: a random oil point, mapped through the real public map, coming out all zeros.
+1. **Keygen: a needle small enough to shrink the haystack** — derive a keypair from a seed you choose, for the toy set or for any of MAYO1, MAYO2, MAYO3 and MAYO5. Shows what actually ships (a 16-byte seed plus the P⁽³⁾ block), what the verifier expands from that seed instead of downloading, and how much larger the same key would be with the whipping removed. For the toy set it also *computes* the trapdoor: a random oil point, mapped through the real public map, coming out all zeros.
 2. **Sign: watch the too-small oil space become solvable** — the headline mechanism, stepped. Hash the message to a target `t`; fix the vinegar and try one unwhipped copy (6 equations, 3 unknowns — echelon form ends in a row reading `0 = c`, and the page says so); whip `k = 3` copies, showing the spec's `Z` matrix of `z^ℓ` exponents; solve the same 6 equations in 9 unknowns; assemble `sᵢ = (vᵢ + O·xᵢ ‖ xᵢ)` and confirm `P*(s) = t`.
-3. **Verify: compute both sides, then try to fool it** — recomputes `t` from the message and salt, evaluates `P*` on the signature, and prints both vectors coordinate by coordinate. Three tamper buttons (flip a nibble in `s`, flip a bit in the salt, change the message under the signature) feed the *real* verifier and report which coordinate first disagrees.
+3. **Verify: compute both sides, then try to fool it** — sign under any parameter set, then watch verification recompute `t` from the message and salt, evaluate `P*` on the signature, and print both vectors coordinate by coordinate. Three tamper buttons (flip a nibble in `s`, flip a bit in the salt, change the message under the signature) feed the *real* verifier and report which coordinate first disagrees.
 4. **UOV versus MAYO, by the byte** — the `k = 1` corner of MAYO's own size formula (`o = m`) next to each shipped set, computed in the page rather than quoted; then spec Table 2.2's nine level-1 `(o, k)` splits, with every size recomputed and any disagreement with the printed table flagged.
 5. **The real thing: reference vectors, replayed in your browser** — seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does, derives the keypair and the signature, and compares its own bytes against the reference hex for MAYO1, MAYO2, MAYO3 and MAYO5.
 
@@ -75,11 +75,11 @@ The rest of the suite covers the field laws of GF(16), `Upper()` preserving the 
 
 Files worth reading: `src/mayo/gf16.ts` (the field), `src/mayo/whip.ts` (the whipping construction and its structural checks), `src/mayo/linalg.ts` (Algorithms 1–2), `src/mayo/mayo.ts` (Algorithms 4–8), `src/mayo/uov.ts` (the size ledger), `src/mayo/kat-vectors.json` (the reference vectors).
 
-**Accessibility gate:** `npm run test:a11y` runs `@axe-core/playwright` against the production build and asserts zero WCAG 2.1 A/AA violations in **both** themes, scanning six driven states per theme (after keygen for all three offered parameter sets, after the whipping walkthrough, on an accepted signature, on each rejected one, under real parameters, and after a reference-vector replay). The GitHub Pages deploy is blocked if it fails.
+**Accessibility gate:** `npm run test:a11y` runs `@axe-core/playwright` against the production build and asserts zero WCAG 2.1 A/AA violations in **both** themes, scanning six driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough, on an accepted signature, on each rejected one, under real parameters, and after a reference-vector replay). The GitHub Pages deploy is blocked if it fails.
 
 ## Performance
 
-Measured in-page and reported by Exhibit 5. On a recent laptop, MAYO1 keygen is roughly 8 ms, signing 15 ms and verification 9 ms; MAYO2 is faster still, and MAYO5 stays well under a tenth of a second. Nothing here is optimised — the code keeps the spec's readable form and skips the nibble-slicing that the reference implementation uses for SIMD.
+Measured in-page and reported by Exhibit 5. On a recent laptop, MAYO1 keygen is roughly 8 ms, signing 15 ms and verification 9 ms; MAYO2 is faster still. Keygen, signing and verification together take about 130 ms at MAYO3 and about 290 ms at MAYO5 — a noticeable pause on a button press, but no more than that. Nothing here is optimised — the code keeps the spec's readable form and skips the nibble-slicing that the reference implementation uses for SIMD.
 
 ## Honest Scoping
 
