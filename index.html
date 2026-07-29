@@ -215,11 +215,23 @@
             </dd>
             <dt>Salt, target t</dt>
             <dd>
-              The message digest plus a per-signature salt are hashed into the target vector t ∈ GF(16)^m. Hitting t
+              The message digest plus a per-signature salt are hashed into the target vector t ∈ GF(16)ᵐ. Hitting t
               is exactly what a valid signature does.
             </dd>
           </dl>
         </details>
+
+        <nav class="jumpnav" aria-label="Jump to an exhibit">
+          <span class="jumpnav__label">Exhibits</span>
+          <ol>
+            <li><a href="#keygen">1 · Keygen and key size</a></li>
+            <li><a href="#whip">2 · The whip, stepped</a></li>
+            <li><a href="#verify">3 · Verify and tamper</a></li>
+            <li><a href="#forge">4 · Try to forge one</a></li>
+            <li><a href="#ledger">5 · UOV versus MAYO</a></li>
+            <li><a href="#real">6 · Reference vectors</a></li>
+          </ol>
+        </nav>
 
         <p class="note">
           Not production crypto — a teaching demo. Real MAYO1/MAYO2/MAYO3/MAYO5 parameters are implemented and
@@ -375,8 +387,45 @@
         <div id="vf-out" role="status" aria-live="polite"></div>
       </section>
 
+      <section class="section" id="forge" aria-labelledby="forge-h">
+        <p class="kicker">Exhibit 4 — try to forge one</p>
+        <h2 id="forge-h">Forge it without the trapdoor</h2>
+        <p class="lede">
+          Tampering breaks a signature; forging means making one from nothing. Two honest attempts are available here,
+          and both run the real code. Guess s and the salt at random and count how close you get — each of the m
+          coordinates lands by luck one time in sixteen. Or keep the real key material and change only the oil space:
+          the linear algebra still succeeds and the signature is still the right length, but the public map vanishes on
+          the real oil space alone, so the verifier still says no.
+        </p>
+
+        <div class="controls">
+          <div class="field">
+            <label for="fg-params">Parameter set</label>
+            <select id="fg-params">
+              <option value="TOY" selected>TOY — m = 6, so a guess needs 16⁶</option>
+              <option value="MAYO1">MAYO1 — m = 78, so a guess needs 16⁷⁸</option>
+              <option value="MAYO2">MAYO2 — m = 64, so a guess needs 16⁶⁴</option>
+            </select>
+          </div>
+          <div class="field field--grow">
+            <label for="fg-msg">Message to forge a signature for</label>
+            <input id="fg-msg" type="text" value="pay bob 1000000" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn--danger" id="fg-guess" type="button" title="Draws random s and salt, evaluates the real public map, and counts matching coordinates.">Guess at random</button>
+          <button class="btn btn--danger" id="fg-oil-random" type="button" title="Runs the real signer with a completely different oil space.">Sign with a random oil space</button>
+          <button class="btn btn--danger" id="fg-oil-nibble" type="button" title="Runs the real signer with one nibble of the real oil space changed.">Change one nibble of O</button>
+          <button class="btn btn--ghost" id="fg-control" type="button" title="The same rebuilt-secret-key code path, but with the genuine oil space.">Control: use the real O</button>
+          <button class="btn btn--ghost" id="fg-malformed" type="button" title="Feeds four malformed signatures to the real verifier and reports how each is refused.">Malformed input battery</button>
+        </div>
+
+        <div id="fg-out" role="status" aria-live="polite"></div>
+      </section>
+
       <section class="section" id="ledger" aria-labelledby="ledger-h">
-        <p class="kicker">Exhibit 4</p>
+        <p class="kicker">Exhibit 5</p>
         <h2 id="ledger-h">UOV versus MAYO, by the byte</h2>
         <p class="lede">
           Classic Oil-and-Vinegar is the k = 1 corner of this same construction: one copy means the signer must solve
@@ -394,7 +443,7 @@
       </section>
 
       <section class="section" id="real" aria-labelledby="real-h">
-        <p class="kicker">Exhibit 5</p>
+        <p class="kicker">Exhibit 6</p>
         <h2 id="real-h">The real thing: reference vectors, replayed in your browser</h2>
         <p class="lede">
           The same code that drives the toy exhibits runs the shipped MAYO parameter sets. Pick a vector from the
@@ -421,16 +470,19 @@
             <h3>Real here</h3>
             <p>
               Hand-rolled GF(16), the spec's encodings, echelon form and SampleSolution, the whipping construction,
-              and MAYO.CompactKeyGen / ExpandSK / ExpandPK / Sign / Verify. SHAKE256 and AES-128-CTR come from
-              @noble. Six reference KAT vectors across MAYO1, MAYO2, MAYO3 and MAYO5 pass byte for byte.
+              and MAYO.CompactKeyGen / ExpandSK / ExpandPK / Sign / Verify. Every verdict on this page — including
+              every failed forgery — is the real MAYO.Verify answering. SHAKE256 and AES-128-CTR come from @noble.
+              Six reference KAT vectors across MAYO1, MAYO2, MAYO3 and MAYO5 pass byte for byte.
             </p>
           </div>
           <div class="card">
             <h3>Not proven here</h3>
             <p>
-              Nothing about MAYO's security. No key-recovery or forgery attack is attempted or claimed; the only way
-              a signature verifies on this page is by being made with the secret key. The toy parameter set is
-              breakable by hand and is labelled as such wherever it appears.
+              Nothing about MAYO's security. Exhibit 4 lets you attempt a forgery and watch it fail, but that is a
+              demonstration of the odds, not cryptanalysis: no key-recovery attack and no attack with any advantage
+              over guessing is implemented or claimed. The only way a signature verifies on this page is by being made
+              with the real oil space. The toy parameter set is breakable by hand and is labelled as such wherever it
+              appears.
             </p>
           </div>
           <div class="card">

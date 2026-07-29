@@ -160,6 +160,10 @@ export const TOY: MayoParams = {
   securityLevel: null,
 };
 
+// [extension] point: a new parameter set is a new entry here plus its f(z). The
+// test suite checks the spec's constraints on (n, m, o, k) and re-verifies that
+// f is irreducible and does not divide det Z for every member of this object, so
+// a bad addition fails loudly rather than silently.
 export const PARAM_SETS = { TOY, MAYO1, MAYO2, MAYO3, MAYO5 } as const;
 export type ParamSetName = keyof typeof PARAM_SETS;
 

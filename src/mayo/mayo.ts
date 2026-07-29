@@ -338,6 +338,10 @@ export interface SignOptions {
    * The optional randomizer R (spec Algorithm 7 line 9). Defaults to all zeros,
    * which makes signing deterministic — that is what the reference KAT uses
    * after seeding R from its DRBG, and what makes this page reproducible.
+   *
+   * [extension] point: a hedged-randomness mode (R from a CSPRNG mixed with a
+   * counter) belongs here, so the KAT path can keep passing R explicitly while
+   * the UI opts into fresh randomness.
    */
   r?: Uint8Array;
 }

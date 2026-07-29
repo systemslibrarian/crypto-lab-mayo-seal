@@ -24,11 +24,12 @@ where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. 
 
 ## Exhibits
 
-1. **Keygen: a needle small enough to shrink the haystack** — derive a keypair from a seed you choose, for the toy set or for any of MAYO1, MAYO2, MAYO3 and MAYO5. Shows what actually ships (a 16-byte seed plus the P⁽³⁾ block), what the verifier expands from that seed instead of downloading, and how much larger the same key would be with the whipping removed. For the toy set it also *computes* the trapdoor: a random oil point, mapped through the real public map, coming out all zeros.
+1. **Keygen: a needle small enough to shrink the haystack** — derive a keypair from a seed you choose, for the toy set or for any of MAYO1, MAYO2, MAYO3 and MAYO5. Shows what actually ships (a 16-byte seed plus the P⁽³⁾ block), what the verifier expands from that seed instead of downloading, and how much larger the same key would be with the whipping removed. For the toy set it also *computes* the trapdoor twice over: a random oil point mapped through the real public map comes out all zeros, and so does a random point of `Oᵏ` through the whipped map — the property whipping has to preserve for a solution to exist.
 2. **Sign: watch the too-small oil space become solvable** — the headline mechanism, stepped. Hash the message to a target `t`; fix the vinegar and try one unwhipped copy (6 equations, 3 unknowns — echelon form ends in a row reading `0 = c`, and the page says so); whip `k = 3` copies, showing the spec's `Z` matrix of `z^ℓ` exponents; solve the same 6 equations in 9 unknowns; assemble `sᵢ = (vᵢ + O·xᵢ ‖ xᵢ)` and confirm `P*(s) = t`.
 3. **Verify: compute both sides, then try to fool it** — sign under any parameter set, then watch verification recompute `t` from the message and salt, evaluate `P*` on the signature, and print both vectors coordinate by coordinate. Three tamper buttons (flip a nibble in `s`, flip a bit in the salt, change the message under the signature) feed the *real* verifier and report which coordinate first disagrees.
-4. **UOV versus MAYO, by the byte** — the `k = 1` corner of MAYO's own size formula (`o = m`) next to each shipped set, computed in the page rather than quoted; then spec Table 2.2's nine level-1 `(o, k)` splits, with every size recomputed and any disagreement with the printed table flagged.
-5. **The real thing: reference vectors, replayed in your browser** — seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does, derives the keypair and the signature, and compares its own bytes against the reference hex for MAYO1, MAYO2, MAYO3 and MAYO5.
+4. **Forge it without the trapdoor** — the break-it-yourself panel, where every button runs the real code and fails. Guess `s` and the salt at random and watch the match histogram come out binomial at one-in-sixteen per coordinate, with the measured guess rate extrapolated to the `16^m` a real forgery costs. Or keep the genuine key material and change only the oil space — at random, or by a single nibble: `Sign` still solves a full-rank system and still emits a correctly-sized signature, and `Verify` still rejects it, because `P⁽³⁾` was built from the real `O`. A control button runs the identical rebuilt-key path with the real `O` and verifies. A fourth button feeds the verifier four malformed signatures and reports which are refused on shape before any field arithmetic and which are rejected by the comparison.
+5. **UOV versus MAYO, by the byte** — the `k = 1` corner of MAYO's own size formula (`o = m`) next to each shipped set, computed in the page rather than quoted; then spec Table 2.2's nine level-1 `(o, k)` splits, with every size recomputed and any disagreement with the printed table flagged.
+6. **The real thing: reference vectors, replayed in your browser** — seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does, derives the keypair and the signature, and compares its own bytes against the reference hex for MAYO1, MAYO2, MAYO3 and MAYO5.
 
 ## When to Use It
 
@@ -42,7 +43,8 @@ where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. 
 - **A too-small oil space with no whipping.** Exhibit 2 shows it directly: `m` equations in `o < m` unknowns is inconsistent with probability about `1 − 16^-(m-o)`. This is why `k·o > m` is a hard constraint, checked in the test suite for every parameter set.
 - **Emulsifier matrices that lose rank.** If some non-trivial combination of the `E` matrices were singular, whipped copies could cancel and the construction would collapse. MAYO avoids it by making the `E` powers of a field element: `f(z)` must be irreducible of degree `m`, and must not divide `det Z(k×k)`. Both conditions are re-verified here for all five parameter sets, including the toy one.
 - **Rank-deficient signing systems.** `SampleSolution` returns ⊥ rather than a wrong answer when `rank(A) < m`; `Sign` re-draws the vinegar with the next `ctr` value. The round-2 parameters deliberately raise that restart probability to between `2⁻¹²` and `2⁻²⁰` so implementations can actually test the path.
-- **Reusing the randomizer, or dropping the salt.** The salt binds the target to a per-signature value; the page's tamper buttons show that one flipped salt bit moves every coordinate of `t`.
+- **Reusing the randomizer, or dropping the salt.** The salt binds the target to a per-signature value; the page's tamper buttons show that one flipped salt bit moves every coordinate of `t`, and the malformed-input battery shows that a genuine salt from a *different* signature by the same key is just as fatal.
+- **A corrupted oil space in the signer.** Exhibit 4 makes this concrete: a signer whose `O` is wrong by one nibble still solves its linear system and still emits a well-formed signature, and every one of them is rejected. A multivariate signer therefore cannot detect trapdoor corruption from the fact that signing "worked" — only verification catches it, which is a good argument for verifying after signing.
 - **The multivariate family's track record.** Rainbow was broken by Beullens in 2022, and the rectangular MinRank attack shaped MAYO's round-2 parameter choice (`o ≤ n − m`). Nothing on this page argues that MAYO is secure — see [crypto-lab-multivariate](https://systemslibrarian.github.io/crypto-lab-multivariate/) for the break itself.
 
 ## Real-World Usage
@@ -54,7 +56,7 @@ MAYO is a NIST PQC additional-signatures on-ramp candidate, advanced to the seco
 ```bash
 npm install
 npm run dev            # http://localhost:5173/crypto-lab-mayo-seal/
-npm test               # 107 unit tests, including 6 reference KAT vectors
+npm test               # 116 unit tests, including 6 reference KAT vectors
 npm run build          # tsc --noEmit && vite build
 npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built site
 ```
@@ -69,13 +71,13 @@ npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built 
 
 ## Build & Verify
 
-**107 unit tests** (Vitest, colocated as `src/**/*.test.ts`), of which **6 are reference known-answer tests** taken from the round-2 submission's `KAT/PQCsignKAT_*.rsp` files — two vectors each for MAYO1 and MAYO2, one each for MAYO3 and MAYO5. Each KAT seeds the NIST AES-256-CTR-DRBG from the vector's `seed`, derives `seedsk` and the signing randomizer `R` from it in the harness's order, and asserts that our secret key, public key and `signature ‖ message` match the reference hex **byte for byte**, then that our verifier accepts.
+**116 unit tests** (Vitest, colocated as `src/**/*.test.ts`), of which **6 are reference known-answer tests** taken from the round-2 submission's `KAT/PQCsignKAT_*.rsp` files — two vectors each for MAYO1 and MAYO2, one each for MAYO3 and MAYO5. Each KAT seeds the NIST AES-256-CTR-DRBG from the vector's `seed`, derives `seedsk` and the signing randomizer `R` from it in the harness's order, and asserts that our secret key, public key and `signature ‖ message` match the reference hex **byte for byte**, then that our verifier accepts.
 
 The rest of the suite covers the field laws of GF(16), `Upper()` preserving the quadratic form, encoder round-trips at every length, the derived-size formulas against spec Table 2.1, irreducibility of all five `f(z)` and the `f ∤ det Z` condition, full rank of the emulsifier combinations, echelon-form invariants, `SampleSolution` correctness and its rank-deficiency refusal, `P` vanishing on `O` and `P*` on `Oᵏ`, accept-good / reject-every-bad for signatures (modified message, single-nibble edits across `s` and the salt, cross-key, all-zero, wrong lengths), and the size-ledger claims.
 
-Files worth reading: `src/mayo/gf16.ts` (the field), `src/mayo/whip.ts` (the whipping construction and its structural checks), `src/mayo/linalg.ts` (Algorithms 1–2), `src/mayo/mayo.ts` (Algorithms 4–8), `src/mayo/uov.ts` (the size ledger), `src/mayo/kat-vectors.json` (the reference vectors).
+Files worth reading: `src/mayo/gf16.ts` (the field), `src/mayo/whip.ts` (the whipping construction and its structural checks), `src/mayo/linalg.ts` (Algorithms 1–2), `src/mayo/mayo.ts` (Algorithms 4–8), `src/mayo/forge.ts` (the failed attacks and the fail-closed cases), `src/mayo/uov.ts` (the size ledger), `src/mayo/kat-vectors.json` (the reference vectors). Places shaped for a likely extension are marked `// [extension] point`.
 
-**Accessibility gate:** `npm run test:a11y` runs `@axe-core/playwright` against the production build and asserts zero WCAG 2.1 A/AA violations in **both** themes, scanning six driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough, on an accepted signature, on each rejected one, under real parameters, and after a reference-vector replay). The GitHub Pages deploy is blocked if it fails.
+**Accessibility gate:** `npm run test:a11y` runs `@axe-core/playwright` against the production build and asserts zero WCAG 2.1 A/AA violations in **both** themes, scanning seven driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough, on an accepted signature, on each rejected one, under real parameters, after every forgery attempt and the malformed-input battery, and after a reference-vector replay). The GitHub Pages deploy is blocked if it fails.
 
 ## Performance
 
@@ -85,7 +87,7 @@ Measured in-page and reported by Exhibit 5. On a recent laptop, MAYO1 keygen is 
 
 - **Real:** hand-rolled GF(16) and all MAYO-specific math; SHAKE256 and AES-128-CTR from [@noble](https://github.com/paulmillr/noble-hashes) (audited, synchronous — WebCrypto has no SHAKE and no synchronous AES). Real parameter sets, real reference vectors.
 - **Simulated:** nothing. The toy parameter set is a genuine, tiny instance of the same construction, labelled as insecure wherever it appears.
-- **Not proven:** anything about MAYO's security. No key-recovery or forgery attack is attempted or claimed; the only way a signature verifies here is by being made with the secret key. Side-channel and fault attacks are out of scope, as are the other on-ramp multivariate candidates (QR-UOV, SNOVA) and classic UOV's internals.
+- **Not proven:** anything about MAYO's security. Exhibit 4 attempts forgeries and they fail, but that demonstrates the odds rather than any cryptanalysis: no key-recovery attack, and nothing with an advantage over guessing, is implemented or claimed. The only way a signature verifies here is by being made with the real oil space. Side-channel and fault attacks are out of scope, as are the other on-ramp multivariate candidates (QR-UOV, SNOVA) and classic UOV's internals.
 - **No backend.** Everything runs in the browser; key material lives in memory for the length of a page view and is never persisted or transmitted.
 
 ---

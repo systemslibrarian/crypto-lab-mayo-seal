@@ -2,7 +2,7 @@
 import { matVecMul } from '../mayo/gf16';
 import { bytesToHex, hexToBytes } from '../mayo/encode';
 import { PARAM_SETS, sizes, type MayoParams, type ParamSetName } from '../mayo/params';
-import { assemblePublicMatrices, compactKeyGen, evalP, expandPK } from '../mayo/mayo';
+import { assemblePublicMatrices, compactKeyGen, evalP, evalWhipped, expandPK } from '../mayo/mayo';
 import { compareWithUov, sizeBreakdown } from '../mayo/uov';
 import {
   bar,
@@ -153,6 +153,17 @@ function renderTrapdoor(p: MayoParams, o: ReturnType<typeof compactKeyGen>['o'],
   const value = evalP(pMats, oilPoint);
   const allZero = value.every((v) => v === 0);
 
+  // The same property one level up: P* vanishes on Oᵏ, which is what guarantees
+  // the whipped system has solutions at all.
+  const whippedPoint = new Uint8Array(p.k * p.n);
+  for (let i = 0; i < p.k; i++) {
+    const xi = crypto.getRandomValues(new Uint8Array(p.o)).map((v) => v & 0xf);
+    whippedPoint.set(matVecMul(o, xi), i * p.n);
+    whippedPoint.set(xi, i * p.n + p.n - p.o);
+  }
+  const whippedValue = evalWhipped(p, pMats, whippedPoint);
+  const whippedZero = whippedValue.every((v) => v === 0);
+
   const card = el('div', { class: 'card' }, [
     el('h3', { text: 'The trapdoor: the map vanishes on the oil space' }),
     el('p', {
@@ -176,6 +187,20 @@ function renderTrapdoor(p: MayoParams, o: ReturnType<typeof compactKeyGen>['o'],
       allZero
         ? 'Because P vanishes on O, a signer who knows O can move along it freely, which turns signing into a linear problem.'
         : 'Report this: the oil space must always be in the kernel of the public map.',
+    ),
+    el('p', { class: 'field-label', text: `P*(o₁,…,o_k) for k = ${p.k} independent oil points` }),
+    vectorList(whippedValue, {
+      ariaLabel: 'the whipped map evaluated on an oil-space point',
+      cell: (_i, v) => (v === 0 ? 'is-ok' : 'is-bad'),
+    }),
+    verdict(
+      whippedZero ? 'ok' : 'bad',
+      whippedZero
+        ? 'The whipped map vanishes on Oᵏ too — which is why a solution exists to find'
+        : 'Non-zero output — this would be a bug',
+      whippedZero
+        ? 'Whipping preserves the trapdoor. That is the whole design constraint: P* must stay zero on Oᵏ while gaining k times the unknowns.'
+        : 'Report this: whipping must preserve the vanishing property.',
     ),
   ]);
 

@@ -740,6 +740,76 @@ tbody tr:last-child td {
   font-size: 0.95rem;
 }
 
+/* ---------- exhibit jump nav ---------- */
+
+.jumpnav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.9rem;
+  margin-top: 1.2rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--panel-2);
+}
+
+.jumpnav__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.jumpnav ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.92rem;
+}
+
+/* ---------- pass/fail check list ---------- */
+
+.checks {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7rem;
+}
+
+.check {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--panel-2);
+}
+
+.check__icon {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.check p {
+  margin: 0.3rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+}
+
+.check__why {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
 /* ---------- disclosure ---------- */
 
 details {

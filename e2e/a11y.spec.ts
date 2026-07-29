@@ -70,7 +70,21 @@ async function driveVerifyRealParams(page: Page): Promise<void> {
   await expect(page.locator('#vf-out .verdict').first()).toContainText('VALID');
 }
 
-/** Exhibit 5: replay a reference vector, including a level-5 one. */
+/** Exhibit 4: every forgery attempt, plus the malformed-input battery. */
+async function driveForge(page: Page): Promise<void> {
+  await page.click('#fg-guess');
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('0 forgeries in', { timeout: 30_000 });
+  await page.click('#fg-oil-random');
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('REJECTED', { timeout: 30_000 });
+  await page.click('#fg-oil-nibble');
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('REJECTED', { timeout: 30_000 });
+  await page.click('#fg-control');
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('VALID', { timeout: 30_000 });
+  await page.click('#fg-malformed');
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('were refused', { timeout: 30_000 });
+}
+
+/** Exhibit 6: replay a reference vector, including a level-5 one. */
 async function driveKat(page: Page): Promise<void> {
   await page.selectOption('#kat-select', 'MAYO_5:0');
   await page.click('#kat-run');
@@ -89,6 +103,8 @@ async function driveAll(page: Page): Promise<void> {
   await scan(page, 'signature rejected');
   await driveVerifyRealParams(page);
   await scan(page, 'real parameters accepted');
+  await driveForge(page);
+  await scan(page, 'forgery attempts and the malformed-input battery');
   await driveKat(page);
   await openEverything(page);
   await scan(page, 'reference vector replayed');
