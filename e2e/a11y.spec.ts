@@ -75,9 +75,9 @@ async function driveForge(page: Page): Promise<void> {
   await page.click('#fg-guess');
   await expect(page.locator('#fg-out .verdict').first()).toContainText('0 forgeries in', { timeout: 30_000 });
   await page.click('#fg-oil-random');
-  await expect(page.locator('#fg-out .verdict').first()).toContainText('REJECTED', { timeout: 30_000 });
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('Forgery rejected', { timeout: 30_000 });
   await page.click('#fg-oil-nibble');
-  await expect(page.locator('#fg-out .verdict').first()).toContainText('REJECTED', { timeout: 30_000 });
+  await expect(page.locator('#fg-out .verdict').first()).toContainText('Forgery rejected', { timeout: 30_000 });
   await page.click('#fg-control');
   await expect(page.locator('#fg-out .verdict').first()).toContainText('VALID', { timeout: 30_000 });
   await page.click('#fg-malformed');

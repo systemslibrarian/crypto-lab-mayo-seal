@@ -154,13 +154,16 @@ function renderOilAttempt(p: MayoParams, attempt: OilSpaceAttempt): HTMLElement 
   const isControl = attempt.mode === 'real';
   const ok = attempt.result.ok;
 
+  // Colour tracks whether the system behaved correctly, not the return value: a
+  // forgery that gets rejected is a pass, and a forgery that gets accepted would
+  // be the alarm.
   const headline = isControl
     ? ok
       ? 'VALID — the real oil space, through the same rebuilt key, signs correctly'
       : 'The control failed, which would be a bug'
     : ok
-      ? 'A wrong oil space produced a valid signature — please report it'
-      : `REJECTED — P*(s) ≠ t, first difference at coordinate ${attempt.result.firstMismatch}`;
+      ? 'ALARM — a wrong oil space produced a signature the verifier accepted'
+      : `Forgery rejected — P*(s) ≠ t, first difference at coordinate ${attempt.result.firstMismatch}`;
 
   const detail = isControl
     ? 'This is the control: identical code, identical key material, only the genuine O. It proves the failures above come from the oil space and nothing else.'
