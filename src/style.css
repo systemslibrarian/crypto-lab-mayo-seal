@@ -1,0 +1,834 @@
+/* MAYO Seal — dark is the default palette; [data-theme="light"] overrides it.
+   Every colour pair here is chosen to clear WCAG 2.1 AA in both themes. */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0e1207;
+  --bg-2: #141a0c;
+  --panel: #171e0e;
+  --panel-2: #1d2612;
+  --border: #33401f;
+  --border-strong: #4a5c2c;
+
+  --text: #f2f5e8;
+  --text-dim: #c3cbaa;
+  --text-muted: #a3ad88;
+
+  --accent: #b8c34a;
+  --accent-ink: #14180a;
+  --accent-soft: #2a331a;
+
+  --ok: #7fe3a6;
+  --ok-ink: #06200f;
+  --alarm: #ff9a8f;
+  --alarm-ink: #2a0b07;
+  --warn: #f0c95a;
+  --warn-ink: #241a02;
+
+  --focus: #ffd166;
+  --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius: 14px;
+  --radius-lg: 20px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #fbfbf2;
+  --bg-2: #f3f4e6;
+  --panel: #ffffff;
+  --panel-2: #f6f7ea;
+  --border: #d3d8b8;
+  --border-strong: #b3bb92;
+
+  --text: #1b1f10;
+  --text-dim: #3f4626;
+  --text-muted: #55603a;
+
+  --accent: #5f6a12;
+  --accent-ink: #ffffff;
+  --accent-soft: #eaeed2;
+
+  --ok: #0c6b3d;
+  --ok-ink: #ffffff;
+  --alarm: #a4121b;
+  --alarm-ink: #ffffff;
+  --warn: #6d4b00;
+  --warn-ink: #ffffff;
+
+  --focus: #8a5a00;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Longhand, not the `background` shorthand — axe and WebKit miss the shorthand. */
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+
+body {
+  margin: 0;
+  min-width: 300px;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Scope the base element rules to #app so they never fight the always-dark
+   shared top bar, which ships its own self-contained styles. */
+#app p,
+#app li,
+#app dd,
+#app dt,
+#app td,
+#app th {
+  line-height: 1.6;
+}
+
+#app a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#app input,
+#app select,
+#app textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Buttons set their own ink (.btn / .btn--ghost / .btn--danger); inheriting the
+   page text colour here would put near-white type on the light accent fill. */
+#app button {
+  font: inherit;
+}
+
+#app button {
+  cursor: pointer;
+}
+
+#app button:disabled {
+  cursor: not-allowed;
+  filter: saturate(0.4);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+/* BEGIN cl-hero standard — managed, keep in sync across fleet */
+/* Theme mapping for this lab: --text, --text-dim, --border, --accent all exist. */
+.cl-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(1rem,4vw,3rem);flex-wrap:wrap;margin:clamp(1rem,3vw,2rem) 0 1.5rem;}
+.cl-hero-main{flex:1 1 22rem;min-width:min(100%,20rem);}
+.cl-hero-title{margin:0;font-size:clamp(1.6rem,3.8vw,2.7rem);font-weight:700;line-height:1.1;letter-spacing:.01em;}
+.cl-hero-sub{margin:.4rem 0 0;font-size:clamp(.9rem,1.6vw,1.05rem);letter-spacing:.01em;color:var(--text-dim);}
+.cl-hero-desc{margin:.55rem 0 0;font-size:1rem;line-height:1.5;color:var(--text-dim);max-width:60ch;}
+.cl-hero-why{flex:0 1 min(40%,26rem);min-width:min(100%,15rem);border:1px solid var(--border);border-radius:10px;padding:.85rem 1.05rem;background:color-mix(in oklab,var(--accent) 6%,transparent);}
+.cl-hero-why-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.14em;color:var(--accent);}
+.cl-hero-why-text{margin:.35rem 0 0;font-size:.95rem;line-height:1.5;}
+@media (max-width:640px){.cl-hero{flex-direction:column;}.cl-hero-why{flex-basis:auto;width:100%;}}
+/* END cl-hero standard */
+
+/* ---------- layout primitives ---------- */
+
+.section {
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+  padding: clamp(1.1rem, 3vw, 1.9rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background-color: var(--panel);
+}
+
+.section > h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.6vw, 1.7rem);
+  line-height: 1.2;
+}
+
+.kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lede {
+  margin: 0.7rem 0 0;
+  color: var(--text-dim);
+  max-width: 74ch;
+}
+
+.grid {
+  display: grid;
+  gap: clamp(0.9rem, 2vw, 1.25rem);
+  margin-top: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  padding: clamp(0.9rem, 2.2vw, 1.3rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--panel-2);
+}
+
+.card > h3,
+.card > h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1.02rem;
+  line-height: 1.3;
+}
+
+.card p {
+  margin: 0.5rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+.card--flush {
+  background-color: transparent;
+}
+
+.note {
+  margin: 0.9rem 0 0;
+  padding: 0.55rem 0.85rem;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- controls ---------- */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.field--grow {
+  flex: 1 1 16rem;
+}
+
+.field > label,
+.field-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+input[type='text'],
+textarea,
+select {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background-color: var(--bg-2);
+  color: var(--text);
+  min-height: 44px;
+  width: 100%;
+}
+
+textarea {
+  min-height: 76px;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 0.92rem;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.1rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 1.05rem) 1.25rem, calc(100% - 0.75rem) 1.25rem;
+  background-size: 0.32rem 0.32rem, 0.32rem 0.32rem;
+  background-repeat: no-repeat;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.6rem 1.05rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: filter 160ms ease;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn--ghost {
+  background-color: transparent;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.btn--danger {
+  background-color: var(--alarm);
+  color: var(--alarm-ink);
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+/* ---------- readouts ---------- */
+
+.mono {
+  font-family: var(--mono);
+}
+
+.hexblock {
+  margin: 0.6rem 0 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background-color: var(--bg-2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  flex: 1 1 8rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--bg-2);
+}
+
+.stat dt,
+.stat-label {
+  margin: 0;
+  font-size: 0.7rem
+;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat dd,
+.stat-value {
+  margin: 0.25rem 0 0;
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background-color: var(--bg-2);
+  font-weight: 600;
+}
+
+.verdict__icon {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.verdict__body {
+  min-width: 0;
+}
+
+.verdict__body p {
+  margin: 0.25rem 0 0;
+  font-weight: 400;
+  font-size: 0.92rem;
+  color: var(--text-dim);
+}
+
+.verdict--ok {
+  border-color: var(--ok);
+  background-color: color-mix(in oklab, var(--ok) 14%, var(--bg-2));
+}
+
+.verdict--bad {
+  border-color: var(--alarm);
+  background-color: color-mix(in oklab, var(--alarm) 14%, var(--bg-2));
+}
+
+.verdict--warn {
+  border-color: var(--warn);
+  background-color: color-mix(in oklab, var(--warn) 14%, var(--bg-2));
+}
+
+.verdict--idle {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+/* ---------- tables and matrices ---------- */
+
+.scroller {
+  margin-top: 0.9rem;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--bg-2);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+caption {
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+thead th {
+  color: var(--text);
+  font-weight: 700;
+  background-color: var(--panel-2);
+}
+
+tbody tr:last-child th,
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.numeric {
+  text-align: right;
+  font-family: var(--mono);
+}
+
+.matrix-figure {
+  /* Flex column + min-width:0 on the scroller lets the border hug a small
+     matrix while a large one scrolls inside itself instead of widening the
+     page. An inline-block here would leak the table's min-content width. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+
+.matrix-figure > .scroller {
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 0.35rem;
+}
+
+.table-caption {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  max-width: 78ch;
+}
+
+.matrix {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  width: auto;
+}
+
+.matrix th,
+.matrix td {
+  padding: 0.24rem 0.4rem;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.matrix th {
+  color: var(--text-muted);
+  font-weight: 600;
+  background-color: var(--panel-2);
+}
+
+.matrix .cell--zero {
+  color: var(--text-muted);
+}
+
+.matrix .cell--pivot {
+  background-color: color-mix(in oklab, var(--accent) 26%, var(--bg-2));
+  color: var(--text);
+  font-weight: 700;
+}
+
+.matrix .cell--rhs {
+  background-color: var(--panel-2);
+  border-left: 2px solid var(--border-strong);
+}
+
+.matrix .cell--bad {
+  background-color: color-mix(in oklab, var(--alarm) 26%, var(--bg-2));
+  font-weight: 700;
+}
+
+.matrix .cell--ok {
+  background-color: color-mix(in oklab, var(--ok) 22%, var(--bg-2));
+}
+
+.matrix .cell--oilblock {
+  background-color: color-mix(in oklab, var(--accent) 10%, var(--bg-2));
+}
+
+.marker {
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+}
+
+.swatch--pivot {
+  background-color: color-mix(in oklab, var(--accent) 26%, var(--bg-2));
+}
+.swatch--bad {
+  background-color: color-mix(in oklab, var(--alarm) 26%, var(--bg-2));
+}
+.swatch--ok {
+  background-color: color-mix(in oklab, var(--ok) 22%, var(--bg-2));
+}
+.swatch--oil {
+  background-color: color-mix(in oklab, var(--accent) 10%, var(--bg-2));
+}
+
+/* ---------- vectors and size bars ---------- */
+
+.vec {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+  margin: 0.45rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vec li {
+  min-width: 1.5rem;
+  padding: 0.16rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background-color: var(--bg-2);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.vec li.is-oil {
+  background-color: color-mix(in oklab, var(--accent) 18%, var(--bg-2));
+  border-color: var(--accent);
+}
+
+.vec li.is-bad {
+  background-color: color-mix(in oklab, var(--alarm) 24%, var(--bg-2));
+  border-color: var(--alarm);
+  font-weight: 700;
+}
+
+.vec li.is-ok {
+  background-color: color-mix(in oklab, var(--ok) 20%, var(--bg-2));
+  border-color: var(--ok);
+}
+
+.bar {
+  margin-top: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--bg-2);
+}
+
+.bar__fill {
+  display: block;
+  height: 1.15rem;
+  background-color: var(--accent);
+}
+
+.bar__fill--alt {
+  background-color: var(--warn);
+}
+
+.bar-caption {
+  margin: 0.3rem 0 0;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* ---------- steps ---------- */
+
+.steps {
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  /* minmax(0, 1fr), not the default auto: an auto column is floored at its
+     items' min-content width, which lets a wide readout push the page sideways. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.step,
+.card,
+.grid > * {
+  min-width: 0;
+}
+
+.step {
+  padding: clamp(0.85rem, 2vw, 1.2rem);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--panel-2);
+}
+
+.step[data-state='done'] {
+  border-left-color: var(--accent);
+}
+
+.step__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.step__num {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.step__title {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.step__state {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.step__body {
+  margin-top: 0.6rem;
+}
+
+.step__body p {
+  margin: 0.4rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+/* ---------- disclosure ---------- */
+
+details {
+  margin-top: 1rem;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--panel-2);
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+details > *:not(summary) {
+  margin-top: 0.6rem;
+}
+
+dl.glossary {
+  margin: 0;
+}
+
+dl.glossary dt {
+  margin-top: 0.7rem;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+dl.glossary dd {
+  margin: 0.2rem 0 0;
+  color: var(--text-dim);
+}
+
+/* ---------- footer ---------- */
+
+.scripture-footer {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.scripture-footer a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 900px) {
+  .grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .grid--2,
+  .grid--3 {
+    grid-template-columns: 1fr;
+  }
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* flex-basis becomes a *height* once the row turns into a column, so the
+     16rem growth hint on a text field would leave a 16rem hole. */
+  .controls .field,
+  .controls .field--grow {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+  .btn {
+    width: 100%;
+  }
+  .btn-row .btn {
+    width: auto;
+    flex: 1 1 10rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .btn,
+  .card,
+  .step,
+  .verdict {
+    border: 1px solid CanvasText;
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.DS_Store
+*.log
+
+# Local build inputs, not part of the demo (the fleet keeps these out of the lab repos).
+CRYPTO-LAB-TEMPLATE*.md
+brief.txt

@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (function () {
+        const saved = localStorage.getItem('theme');
+        document.documentElement.setAttribute('data-theme', saved ?? 'dark');
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥄</text></svg>"
+    />
+    <meta
+      name="description"
+      content="Signs and verifies with the MAYO multivariate signature scheme, whose whipped Oil-and-Vinegar map keeps UOV's small signatures while shrinking its public key."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MAYO Seal — crypto-lab" />
+    <meta
+      property="og:description"
+      content="Signs and verifies with the MAYO multivariate signature scheme, whose whipped Oil-and-Vinegar map keeps UOV's small signatures while shrinking its public key."
+    />
+    <meta property="og:url" content="https://systemslibrarian.github.io/crypto-lab-mayo-seal/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MAYO Seal — crypto-lab" />
+    <meta
+      name="twitter:description"
+      content="Signs and verifies with the MAYO multivariate signature scheme, whose whipped Oil-and-Vinegar map keeps UOV's small signatures while shrinking its public key."
+    />
+    <title>MAYO Seal — crypto-lab</title>
+  </head>
+  <body>
+<!-- BEGIN crypto-lab shared header — managed; edit shared-header.html + re-run reapply-header.py
+     Identical on every lab. Self-contained styles. Accents use each demo's own
+     --accent CSS variable (teal #35d6bb fallback). The ONLY per-repo value is the
+     repo name (crypto-lab-mayo-seal) in the GitHub link.
+     Source of truth: github.com/systemslibrarian/crypto-lab/shared-header.html -->
+<style>
+  .cl-topbar{
+    /* The bar is always dark (#0b1512) regardless of page theme, so header
+       text must always be light. Mix each lab's --accent toward near-white so
+       the hue still tints the brand but contrast stays >=4.5:1 on the bar even
+       when a lab's accent is dark (e.g. a light-theme #1a56db). */
+    --cl-ink: color-mix(in srgb, var(--accent, #35d6bb) 60%, #eafff8);
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    padding:.7rem clamp(.9rem,3vw,2rem);
+    background:#0b1512;
+    border-bottom:1px solid color-mix(in srgb, var(--accent, #35d6bb) 22%, transparent);
+    font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    position:sticky;top:0;z-index:1000;
+  }
+  .cl-brand{display:flex;align-items:center;gap:.8rem;text-decoration:none}
+  .cl-badge{
+    flex:0 0 auto;display:grid;place-items:center;width:40px;height:40px;
+    border:1.5px solid var(--accent, #35d6bb);border-radius:10px;
+    color:var(--cl-ink);font-weight:700;font-size:.95rem;letter-spacing:.05em;
+  }
+  .cl-brand-text{display:flex;flex-direction:column;line-height:1.15}
+  .cl-title{color:#eafff8;font-weight:700;font-size:1.05rem;letter-spacing:.12em}
+  .cl-sub{color:#5e8b80;font-size:.72rem;letter-spacing:.04em}
+  .cl-actions{display:flex;align-items:center;gap:.5rem}
+  .cl-btn{
+    display:inline-flex;align-items:center;gap:.4rem;
+    padding:.5rem .85rem;border-radius:10px;
+    border:1px solid color-mix(in srgb, var(--accent, #35d6bb) 38%, transparent);
+    background:transparent;color:var(--cl-ink);cursor:pointer;
+    font:inherit;font-size:.78rem;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;text-decoration:none;transition:background .15s,border-color .15s,color .15s;
+  }
+  .cl-btn:hover{
+    background:color-mix(in srgb, var(--accent, #35d6bb) 14%, transparent);
+    border-color:var(--accent, #35d6bb);color:#eafff8;
+  }
+  .cl-btn svg{width:15px;height:15px}
+  .cl-icon{padding:.5rem .6rem;font-size:.95rem}
+  /* Skip-to-content link: first focusable element so keyboard users can bypass
+     this sticky header (WCAG 2.4.1). Hidden until focused. Fixed light-on-dark
+     pair (not --accent, which can be a dark hue on some labs) keeps contrast AA. */
+  .cl-skip-link{
+    position:absolute;left:.5rem;top:-3rem;z-index:1001;
+    padding:.55rem 1rem;border-radius:0 0 10px 10px;
+    background:#eafff8;color:#0b1512;
+    font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    font-weight:700;font-size:.8rem;letter-spacing:.04em;text-decoration:none;
+    transition:top .15s ease;
+  }
+  .cl-skip-link:focus{top:0;outline:2px solid var(--accent,#35d6bb);outline-offset:2px;}
+  /* hide each lab's own in-page theme toggle — the bar's toggle replaces it.
+     element stays in the DOM so the lab's theme JS keeps working. */
+  body :is(#theme-toggle,#themeToggle,.theme-toggle,.theme-toggle-btn,[data-theme-toggle]):not(#cl-theme-toggle){display:none!important}
+  @media(max-width:560px){
+    .cl-sub{display:none}
+    .cl-btn span{display:none}
+    .cl-btn svg{margin:0}
+  }
+</style>
+<a class="cl-skip-link" href="#app">Skip to content</a>
+<header class="cl-topbar" role="banner" aria-label="Crypto Lab">
+  <a class="cl-brand" href="https://crypto-lab.systemslibrarian.dev/" aria-label="Crypto Lab home">
+    <span class="cl-badge">CL</span>
+    <span class="cl-brand-text">
+      <span class="cl-title">CRYPTO LAB</span>
+      <span class="cl-sub">systemslibrarian.dev</span>
+    </span>
+  </a>
+  <nav class="cl-actions" aria-label="Crypto Lab navigation">
+    <a class="cl-btn" href="https://crypto-lab.systemslibrarian.dev/" aria-label="Crypto Lab menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span>Menu</span>
+    </a>
+    <a class="cl-btn" href="https://github.com/systemslibrarian/crypto-lab-mayo-seal" target="_blank" rel="noopener" aria-label="View this project on GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7 0-.7 0-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.3 5 18.3 5.3 18.3 5.3c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .4.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>
+      <span>GitHub</span>
+    </a>
+    <button class="cl-btn cl-icon" id="cl-theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme">☀</button>
+  </nav>
+</header>
+<script>
+  (function () {
+    var t = document.getElementById('cl-theme-toggle');
+    if (t) {
+      var cur = function(){ return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; };
+      var paint = function(){ t.textContent = cur() === 'light' ? '☾' : '☀'; };
+      paint();
+      t.addEventListener('click', function () {
+        var next = cur() === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+        paint();
+      });
+    }
+    // A page may have only one banner landmark. This shared site header is it;
+    // demote any banner a lab also declared on its own page header (explicit
+    // role="banner", or an implicit <header> child of <body>) so landmarks stay unique.
+    function dedupeBanner() {
+      var bar = document.querySelector('.cl-topbar');
+      if (!bar) return;
+      document.querySelectorAll('[role="banner"]').forEach(function (el) {
+        if (el !== bar) el.setAttribute('role', 'group');
+      });
+      Array.prototype.forEach.call(document.body ? document.body.children : [], function (el) {
+        if (el.tagName === 'HEADER' && el !== bar && !el.hasAttribute('role')) el.setAttribute('role', 'group');
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dedupeBanner);
+    else dedupeBanner();
+  })();
+</script>
+<!-- END crypto-lab shared header -->
+    <main id="app" class="shell">
+      <header class="cl-hero">
+        <div class="cl-hero-main">
+          <h1 class="cl-hero-title">MAYO Seal</h1>
+          <p class="cl-hero-sub">MAYO · NIST PQC On-Ramp</p>
+          <p class="cl-hero-desc">
+            Runs real MAYO keygen, signing and verification over GF(16) so you can watch an oil space that is far
+            too small to invert become solvable the moment k copies of the map are whipped together.
+          </p>
+        </div>
+        <aside class="cl-hero-why" aria-label="Why it matters">
+          <span class="cl-hero-why-label">WHY IT MATTERS</span>
+          <p class="cl-hero-why-text">
+            Multivariate signatures are the fastest-verifying post-quantum option we have, but classic Oil-and-Vinegar
+            asks for a public key in the tens of kilobytes — too big for a TLS certificate chain. MAYO cuts that key
+            by more than an order of magnitude without touching the signature's small size, which is why it sits on
+            NIST's signature on-ramp.
+          </p>
+        </aside>
+      </header>
+
+      <section class="section" id="intro" aria-labelledby="intro-h">
+        <p class="kicker">Start here</p>
+        <h2 id="intro-h">What is a multivariate signature?</h2>
+        <p class="lede">
+          A public key here is a bag of quadratic equations in many variables. Signing means finding an input that
+          makes those equations produce exactly the numbers your message hashes to; verifying means plugging the
+          signature in and checking you get those same numbers. Solving such a system is hard in general — that is the
+          security — so the signer needs a secret shortcut. In Oil-and-Vinegar the shortcut is a hidden linear
+          subspace, the <em>oil space</em>, on which every equation collapses to zero.
+        </p>
+        <p class="lede">
+          The catch: the shortcut only works if the oil space is at least as big as the number of equations, and a big
+          oil space forces a big public key. MAYO shrinks the oil space until the shortcut stops working, then repairs
+          it by <em>whipping</em>: it publicly stirs k copies of the same map together, so the signer gets k times as
+          many unknowns to play with while the number of equations stays put.
+        </p>
+
+        <details>
+          <summary>Jargon, unpacked</summary>
+          <dl class="glossary">
+            <dt>GF(16)</dt>
+            <dd>
+              The field with 16 elements. Every number in this page is one of 0–f, one hex digit, and MAYO packs two
+              of them per byte. Addition is XOR; multiplication is polynomial multiplication modulo x⁴ + x + 1.
+            </dd>
+            <dt>n, m, o, k</dt>
+            <dd>
+              n variables, m equations, oil space of dimension o, and k copies whipped together. The whole scheme is a
+              choice of these four numbers.
+            </dd>
+            <dt>Vinegar and oil</dt>
+            <dd>
+              A signature input splits into n − o "vinegar" coordinates the signer picks at random and o "oil"
+              coordinates it then solves for. Oil never multiplies oil in the public map — that missing term is the
+              trapdoor.
+            </dd>
+            <dt>Whipping / the emulsifier</dt>
+            <dd>
+              MAYO's new ingredient: fixed public matrices E⁰, E¹, … (multiplication by z, z², … in a finite field)
+              that combine k copies of the map into one map with the same m outputs but k·n inputs.
+            </dd>
+            <dt>Salt, target t</dt>
+            <dd>
+              The message digest plus a per-signature salt are hashed into the target vector t ∈ GF(16)^m. Hitting t
+              is exactly what a valid signature does.
+            </dd>
+          </dl>
+        </details>
+
+        <p class="note">
+          Not production crypto — a teaching demo. Real MAYO1/MAYO2/MAYO3/MAYO5 parameters are implemented and
+          KAT-verified, but this code is not constant-time and makes no side-channel claims.
+        </p>
+      </section>
+
+      <section class="section" id="keygen" aria-labelledby="keygen-h">
+        <p class="kicker">Exhibit 1</p>
+        <h2 id="keygen-h">Keygen: a needle small enough to shrink the haystack</h2>
+        <p class="lede">
+          A MAYO public key is a 16-byte seed plus one block, P⁽³⁾. Everything else — P⁽¹⁾ and P⁽²⁾, hundreds of
+          kilobytes of it — is expanded from the seed by AES-128-CTR, identically by signer and verifier, so it never
+          travels. Only P⁽³⁾ must be shipped, and P⁽³⁾ is m·o(o+1)/2 field elements: quadratic in the oil dimension.
+          Shrink o and the key shrinks with the square.
+        </p>
+
+        <div class="controls">
+          <div class="field">
+            <label for="kg-params">Parameter set</label>
+            <select id="kg-params">
+              <option value="TOY" selected>TOY — n=9, m=6, o=3, k=3 (small enough to read)</option>
+              <option value="MAYO1">MAYO1 — n=86, m=78, o=8, k=10 (NIST level 1, small key)</option>
+              <option value="MAYO2">MAYO2 — n=81, m=64, o=17, k=4 (NIST level 1, small signature)</option>
+            </select>
+          </div>
+          <div class="field field--grow">
+            <label for="kg-seed">Secret seed (hex, or leave blank for a random one)</label>
+            <input id="kg-seed" type="text" spellcheck="false" autocomplete="off" placeholder="e.g. 00010203…" />
+          </div>
+          <button class="btn" id="kg-run" type="button">Generate keypair</button>
+        </div>
+
+        <div id="kg-out" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="section" id="whip" aria-labelledby="whip-h">
+        <p class="kicker">Exhibit 2 — the headline mechanism</p>
+        <h2 id="whip-h">Sign: watch the too-small oil space become solvable</h2>
+        <p class="lede">
+          This is the whole idea, run step by step on the toy parameters so every number fits on screen. With one copy
+          of the map the signer faces m = 6 equations in only o = 3 unknowns and almost always fails. Whip k = 3
+          copies together and it is m = 6 equations in k·o = 9 unknowns — same equations, three times the room. Run it
+          and read the two systems side by side.
+        </p>
+
+        <div class="controls">
+          <div class="field field--grow">
+            <label for="whip-msg">Message to sign</label>
+            <input id="whip-msg" type="text" value="MAYO is UOV made deployable" spellcheck="false" />
+          </div>
+          <button class="btn" id="whip-next" type="button">Step forward</button>
+          <button class="btn btn--ghost" id="whip-run" type="button">Run all steps</button>
+          <button class="btn btn--ghost" id="whip-reset" type="button">Reset</button>
+        </div>
+
+        <ol class="steps" id="whip-steps">
+          <li class="step" id="whip-step-1" data-state="idle">
+            <div class="step__head">
+              <span class="step__num">1</span>
+              <h3 class="step__title">Hash the message into a target t</h3>
+              <span class="step__state" id="whip-state-1">Waiting</span>
+            </div>
+            <div class="step__body" id="whip-body-1">
+              <p>The salt and the target both come from SHAKE256. A signature is valid exactly when the whipped map lands on this t.</p>
+            </div>
+          </li>
+          <li class="step" id="whip-step-2" data-state="idle">
+            <div class="step__head">
+              <span class="step__num">2</span>
+              <h3 class="step__title">Fix the vinegar, then try one unwhipped copy</h3>
+              <span class="step__state" id="whip-state-2">Waiting</span>
+            </div>
+            <div class="step__body" id="whip-body-2">
+              <p>
+                With the vinegar frozen, the remaining unknowns are the o oil coordinates and the system is linear.
+                It is also over-determined, so echelon form usually ends in a row that reads 0 = something.
+              </p>
+            </div>
+          </li>
+          <li class="step" id="whip-step-3" data-state="idle">
+            <div class="step__head">
+              <span class="step__num">3</span>
+              <h3 class="step__title">Whip k copies together</h3>
+              <span class="step__state" id="whip-state-3">Waiting</span>
+            </div>
+            <div class="step__body" id="whip-body-3">
+              <p>
+                Each unordered pair (i, j) of copies contributes its term multiplied by a different power of z. The
+                grid below is the spec's Z matrix: the exponent ℓ used for each pair.
+              </p>
+            </div>
+          </li>
+          <li class="step" id="whip-step-4" data-state="idle">
+            <div class="step__head">
+              <span class="step__num">4</span>
+              <h3 class="step__title">Solve the whipped system</h3>
+              <span class="step__state" id="whip-state-4">Waiting</span>
+            </div>
+            <div class="step__body" id="whip-body-4">
+              <p>Same m rows, now k·o columns. Gaussian elimination over GF(16), then back-substitution.</p>
+            </div>
+          </li>
+          <li class="step" id="whip-step-5" data-state="idle">
+            <div class="step__head">
+              <span class="step__num">5</span>
+              <h3 class="step__title">Assemble the signature and check it lands on t</h3>
+              <span class="step__state" id="whip-state-5">Waiting</span>
+            </div>
+            <div class="step__body" id="whip-body-5">
+              <p>Each block is sᵢ = (vᵢ + O·xᵢ ‖ xᵢ). Evaluating the public whipped map on s must reproduce t exactly.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="verify" aria-labelledby="verify-h">
+        <p class="kicker">Exhibit 3 — break it yourself</p>
+        <h2 id="verify-h">Verify: compute both sides, then try to fool it</h2>
+        <p class="lede">
+          Verification recomputes t from the message and salt, evaluates the public whipped map on the signature, and
+          compares the two vectors coordinate by coordinate. Nothing is asserted here — both sides are shown. Then
+          tamper with any input you like and watch the real verifier answer.
+        </p>
+
+        <div class="controls">
+          <div class="field">
+            <label for="vf-params">Parameter set</label>
+            <select id="vf-params">
+              <option value="TOY" selected>TOY — every coordinate visible</option>
+              <option value="MAYO1">MAYO1 — real, 78 coordinates</option>
+              <option value="MAYO2">MAYO2 — real, 64 coordinates</option>
+            </select>
+          </div>
+          <div class="field field--grow">
+            <label for="vf-msg">Message</label>
+            <input id="vf-msg" type="text" value="transfer 10 to alice" spellcheck="false" />
+          </div>
+          <button class="btn" id="vf-sign" type="button">Sign this message</button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn--ghost" id="vf-verify" type="button">Verify</button>
+          <button class="btn btn--danger" id="vf-tamper-sig" type="button">Flip a nibble in s</button>
+          <button class="btn btn--danger" id="vf-tamper-salt" type="button">Flip a bit in the salt</button>
+          <button class="btn btn--danger" id="vf-tamper-msg" type="button">Change the message under it</button>
+        </div>
+
+        <div id="vf-out" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="section" id="ledger" aria-labelledby="ledger-h">
+        <p class="kicker">Exhibit 4</p>
+        <h2 id="ledger-h">UOV versus MAYO, by the byte</h2>
+        <p class="lede">
+          Classic Oil-and-Vinegar is the k = 1 corner of this same construction: one copy means the signer must solve
+          m equations in o unknowns, so o has to be at least m. Feed o = m into MAYO's own public-key formula and the
+          key explodes. Every number in the first table is computed here from the size formulas, not quoted.
+        </p>
+        <div id="ledger-uov"></div>
+
+        <h3>The same security level, nine different (o, k) splits</h3>
+        <p class="lede">
+          Spec Table 2.2, NIST level 1. Reading down the table the oil space grows, k shrinks, the public key grows
+          and the signature shrinks. The top row is MAYO1; the bottom row, k = 2, is nearly UOV.
+        </p>
+        <div id="ledger-tradeoff"></div>
+      </section>
+
+      <section class="section" id="real" aria-labelledby="real-h">
+        <p class="kicker">Exhibit 5</p>
+        <h2 id="real-h">The real thing: reference vectors, replayed in your browser</h2>
+        <p class="lede">
+          The same code that drives the toy exhibits runs the shipped MAYO parameter sets. Pick a vector from the
+          round-2 submission's KAT files: the page seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does,
+          derives the keypair and the signature, and compares its own bytes against the reference hex.
+        </p>
+
+        <div class="controls">
+          <div class="field field--grow">
+            <label for="kat-select">Reference vector</label>
+            <select id="kat-select"></select>
+          </div>
+          <button class="btn" id="kat-run" type="button">Replay vector</button>
+        </div>
+
+        <div id="kat-out" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="section" id="scope" aria-labelledby="scope-h">
+        <p class="kicker">Honest scoping</p>
+        <h2 id="scope-h">What this demo does and does not prove</h2>
+        <div class="grid grid--2">
+          <div class="card">
+            <h3>Real here</h3>
+            <p>
+              Hand-rolled GF(16), the spec's encodings, echelon form and SampleSolution, the whipping construction,
+              and MAYO.CompactKeyGen / ExpandSK / ExpandPK / Sign / Verify. SHAKE256 and AES-128-CTR come from
+              @noble. Six reference KAT vectors across MAYO1, MAYO2, MAYO3 and MAYO5 pass byte for byte.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Not proven here</h3>
+            <p>
+              Nothing about MAYO's security. No key-recovery or forgery attack is attempted or claimed; the only way
+              a signature verifies on this page is by being made with the secret key. The toy parameter set is
+              breakable by hand and is labelled as such wherever it appears.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Not built: classic UOV internals</h3>
+            <p>
+              MAYO is UOV's successor, so this page shows the delta, not the ancestor. For the Oil-and-Vinegar
+              trapdoor itself — and for the Rainbow / Beullens break that reshaped this whole family — see
+              <a href="https://systemslibrarian.github.io/crypto-lab-multivariate/">crypto-lab-multivariate</a>.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Not built: side channels</h3>
+            <p>
+              This implementation is not constant-time. Fault and side-channel attacks on multivariate signing are a
+              real threat and a separate subject; see
+              <a href="https://systemslibrarian.github.io/crypto-lab-lattice-fault/">crypto-lab-lattice-fault</a>
+              for how that genre of attack works on a post-quantum signer.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Not built: the other on-ramp candidates</h3>
+            <p>
+              QR-UOV and SNOVA are also multivariate on-ramp submissions with their own structure. They are out of
+              scope; nothing here should be read as a comparison against them.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Not production</h3>
+            <p>
+              Keys live in memory for the length of a page view and are never persisted or transmitted; there is no
+              backend. Use a reviewed implementation for anything real — the reference code is at
+              <a href="https://github.com/PQCMayo/MAYO-C">PQCMayo/MAYO-C</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="scripture-footer">
+        <p>
+          Related demos:
+          <a href="https://systemslibrarian.github.io/crypto-lab-multivariate/">crypto-lab-multivariate</a> ·
+          <a href="https://systemslibrarian.github.io/crypto-lab-dilithium-seal/">crypto-lab-dilithium-seal</a> ·
+          <a href="https://systemslibrarian.github.io/crypto-lab-falcon-seal/">crypto-lab-falcon-seal</a> ·
+          <a href="https://systemslibrarian.github.io/crypto-lab-sphincs-ledger/">crypto-lab-sphincs-ledger</a> ·
+          <a href="https://systemslibrarian.github.io/crypto-lab-pq-families/">crypto-lab-pq-families</a>
+        </p>
+        <p>So whether you eat or drink or whatever you do, do it all for the glory of God. — 1 Corinthians 10:31</p>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
