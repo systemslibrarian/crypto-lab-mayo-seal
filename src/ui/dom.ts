@@ -106,6 +106,16 @@ export function verdict(kind: VerdictKind, headline: string, detail?: string | N
   ]);
 }
 
+/** One labelled number. */
+export function stat(label: string, value: string): HTMLElement {
+  return el('div', { class: 'stat' }, [el('dt', { text: label }), el('dd', { text: value })]);
+}
+
+/** A row of labelled numbers, for the counts a panel turns on. */
+export function statRow(stats: HTMLElement[]): HTMLElement {
+  return el('dl', { class: 'stat-row' }, stats);
+}
+
 let captionSeq = 0;
 
 /**

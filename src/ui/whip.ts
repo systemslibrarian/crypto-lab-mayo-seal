@@ -22,9 +22,34 @@ import {
   type SignResult,
 } from '../mayo/mayo';
 import { emulsifierMatrix, whipPairs } from '../mayo/whip';
-import { byId, compareLegend, disclosure, el, hex, matrixTable, superscript, tableFigure, vectorList, verdict } from './dom';
+import {
+  byId,
+  compareLegend,
+  disclosure,
+  el,
+  hex,
+  matrixTable,
+  stat,
+  statRow,
+  superscript,
+  tableFigure,
+  vectorList,
+  verdict,
+} from './dom';
 
 const TOTAL_STEPS = 5;
+
+/**
+ * The default path is three conceptual beats; the five spec operations sit behind
+ * a disclosure. Both are driven by one state machine and one signature — a beat
+ * is simply the point at which its underlying steps have all been revealed, so
+ * the two views can never show different runs.
+ *
+ * Beat 1 needs the unwhipped attempt to have failed, which is step 2. Beat 2 is
+ * the whipping itself, step 3. Beat 3 needs the system solved and the signature
+ * checked against t, steps 4 and 5.
+ */
+const BEAT_LAST_STEP = [2, 3, 5] as const;
 
 /**
  * How much of a matrix to draw. The toy set fits whole; the real sets are drawn
@@ -49,6 +74,12 @@ interface State {
   seed: Uint8Array;
   result: SignResult;
   revealed: number;
+  /**
+   * Whether P*(s) reproduced t, stashed by step 5 so beat 3 can report the check
+   * without evaluating the public whipped map a second time — the expensive part
+   * of the walkthrough at real parameters.
+   */
+  verified?: boolean;
 }
 
 let state: State | null = null;
@@ -98,7 +129,12 @@ export function initWhip(): void {
       byId(`whip-step-${step}`).dataset.state = done ? 'done' : 'idle';
       byId(`whip-state-${step}`).textContent = done ? 'Done' : 'Waiting';
     }
-    next.textContent = s.revealed >= TOTAL_STEPS ? 'All steps shown' : 'Step forward';
+    BEAT_LAST_STEP.forEach((last, i) => {
+      const done = s.revealed >= last;
+      byId(`whip-beat-${i + 1}`).dataset.state = done ? 'done' : 'idle';
+      byId(`whip-beat-state-${i + 1}`).textContent = done ? 'Done' : 'Waiting';
+    });
+    next.textContent = s.revealed >= TOTAL_STEPS ? 'All beats shown' : 'Step forward';
     next.disabled = s.revealed >= TOTAL_STEPS;
   };
 
@@ -107,11 +143,18 @@ export function initWhip(): void {
     for (let step = s.revealed + 1; step <= upTo; step++) {
       renderStep(step, s);
       s.revealed = step;
+      const beat = BEAT_LAST_STEP.indexOf(step as (typeof BEAT_LAST_STEP)[number]);
+      if (beat !== -1) renderBeat(beat + 1, s);
     }
     draw();
   };
 
-  next.addEventListener('click', () => reveal((state?.revealed ?? 0) + 1));
+  // Step forward advances a beat, not a spec operation: the beats are the default
+  // path, and the steps inside the disclosure fill in to match.
+  next.addEventListener('click', () => {
+    const at = state?.revealed ?? 0;
+    reveal(BEAT_LAST_STEP.find((last) => last > at) ?? TOTAL_STEPS);
+  });
   byId('whip-run').addEventListener('click', () => reveal(TOTAL_STEPS));
   byId('whip-reset').addEventListener('click', () => {
     state = null;
@@ -122,6 +165,11 @@ export function initWhip(): void {
       byId(`whip-step-${step}`).dataset.state = 'idle';
       byId(`whip-state-${step}`).textContent = 'Waiting';
     }
+    for (let beat = 1; beat <= BEAT_LAST_STEP.length; beat++) {
+      byId(`whip-beat-body-${beat}`).replaceChildren();
+      byId(`whip-beat-${beat}`).dataset.state = 'idle';
+      byId(`whip-beat-state-${beat}`).textContent = 'Waiting';
+    }
     next.disabled = false;
     next.textContent = 'Step forward';
   });
@@ -131,6 +179,81 @@ export function initWhip(): void {
   // A different parameter set is a different walkthrough: clear the steps so the
   // panels can never show a mix of two runs.
   setSelect.addEventListener('change', () => byId<HTMLButtonElement>('whip-reset').click());
+}
+
+/**
+ * A beat is the plain-language summary of the steps beneath it: the counts that
+ * changed and the outcome, with every matrix, hex block and elimination table
+ * left to the disclosure. Same run, same numbers, less of them.
+ */
+function renderBeat(beat: number, s: State): void {
+  const target = byId(`whip-beat-body-${beat}`);
+  target.replaceChildren();
+  const p = s.p;
+
+  if (beat === 1) {
+    const attempt = tryUnwhipped(p, s.keys.sk, s.result.trace.t, s.result.trace.vinegar[0]);
+    target.append(
+      statRow([
+        stat('equations (m)', String(p.m)),
+        stat('oil unknowns (o)', String(p.o)),
+        stat('short by', String(p.m - p.o)),
+      ]),
+    );
+    if (attempt.x === null) {
+      const row = attempt.contradictionRow!;
+      const rhs = attempt.echelon.d[row * (attempt.a.cols + 1) + attempt.a.cols];
+      target.append(
+        verdict(
+          'warn',
+          `No solution — row ${row} reads 0 = ${rhs.toString(16)}`,
+          `Elimination ran out of unknowns with ${p.m - p.o} equations still to satisfy. Nothing is wrong with the trapdoor here; there is simply not enough freedom to spend.`,
+        ),
+      );
+    } else {
+      target.append(
+        verdict(
+          'warn',
+          `This vinegar happened to work — the 1-in-16${superscript(p.m - p.o)} case`,
+          'A single copy can get lucky. Press Reset and change the message to see the usual outcome.',
+        ),
+      );
+    }
+    return;
+  }
+
+  if (beat === 2) {
+    target.append(
+      statRow([
+        stat('copies (k)', String(p.k)),
+        stat('oil unknowns (k·o)', String(p.k * p.o)),
+        stat('equations (m)', String(p.m)),
+        stat('room to spare', String(p.k * p.o - p.m)),
+      ]),
+      verdict(
+        'ok',
+        `${p.o} unknowns became ${p.k * p.o}, and m stayed at ${p.m}`,
+        `Only the width moved. The ${p.k} copies are stirred together with distinct powers of z, which is what stops them collapsing into each other, and each keeps the same hidden oil space.`,
+      ),
+    );
+    return;
+  }
+
+  const { trace, sig } = s.result;
+  target.append(
+    statRow([
+      stat('vinegar draws', String(trace.attempts.length)),
+      stat('solutions available', `16${superscript(trace.system.a.cols - trace.system.a.rows)}`),
+      stat('signature', `${sig.length} B`),
+    ]),
+    verdict(
+      s.verified ? 'ok' : 'bad',
+      s.verified ? 'P*(s) = t — the signature lands exactly on the target' : 'Mismatch — this would be a bug',
+      s.verified
+        ? `Elimination found the ${trace.system.a.cols} oil coordinates on draw ${trace.attempts.length}, and the public whipped map evaluated on the assembled signature reproduced t coordinate for coordinate.`
+        : 'Signing and verification disagree; please report this.',
+    ),
+  );
 }
 
 function stepTarget(step: number): HTMLElement {
@@ -340,6 +463,8 @@ function renderAssemble(target: HTMLElement, s: State): void {
   const pMats = assemblePublicMatrices(p, s.keys.pk);
   const y = evalWhipped(p, pMats, trace.s);
   const matches = y.every((value, i) => value === trace.t[i]);
+  // Beat 3 reports this check rather than repeating it.
+  s.verified = matches;
 
   const blocksShown = p === TOY ? p.k : Math.min(p.k, 2);
   for (let i = 0; i < blocksShown; i++) {

@@ -16,7 +16,7 @@
  */
 import { maxWhippingFactor, PARAM_SETS, type MayoParams, type ParamSetName } from '../mayo/params';
 import { compareWithUov, smallestKWithRoom, whipBalance, type WhipBalance } from '../mayo/uov';
-import { byId, clear, el, formatBytes, power, subscript } from './dom';
+import { byId, clear, el, formatBytes, power, stat, statRow, subscript } from './dom';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -61,7 +61,7 @@ export function initWhipViz(): void {
 
     clear(readout);
     readout.append(
-      el('dl', { class: 'stat-row' }, [
+      statRow([
         stat('unknowns (k·o)', String(balance.unknowns)),
         stat('equations (m)', String(balance.equations)),
         stat(balance.slack >= 0 ? 'room to spare' : 'short by', String(Math.abs(balance.slack))),
@@ -93,10 +93,6 @@ export function initWhipViz(): void {
 
   configure(PARAM_SETS[select.value as ParamSetName]);
   draw();
-}
-
-function stat(label: string, value: string): HTMLElement {
-  return el('div', { class: 'stat' }, [el('dt', { text: label }), el('dd', { text: value })]);
 }
 
 /** "84.6×" for small ratios, "85×" once the decimal stops carrying information. */

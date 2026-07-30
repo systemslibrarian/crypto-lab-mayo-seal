@@ -325,10 +325,11 @@
         <p class="kicker">Exhibit 2 — the headline mechanism</p>
         <h2 id="whip-h">Sign: watch too few oil variables become enough</h2>
         <p class="lede">
-          This is the whole idea, run step by step. With one copy of the map the signer faces m equations in only o
+          This is the whole idea in three beats. With one copy of the map the signer faces m equations in only o
           unknowns and almost always fails; whip k copies together and it is the same m equations in k·o unknowns.
           Start on the toy parameters, where every number fits on screen, then run the identical walkthrough on real
-          MAYO1 or MAYO2 — the matrices are drawn as a corner there, but every number in them is the real one.
+          MAYO1 or MAYO2 — the matrices are drawn as a corner there, but every number in them is the real one. The
+          five spec operations behind these three beats are one disclosure away, and they run the same computation.
         </p>
 
         <div class="predict" id="pr-whip"></div>
@@ -350,6 +351,54 @@
           <button class="btn btn--ghost" id="whip-run" type="button">Run all steps</button>
           <button class="btn btn--ghost" id="whip-reset" type="button">Reset</button>
         </div>
+
+        <ol class="beats" id="whip-beats">
+          <li class="beat" id="whip-beat-1" data-state="idle">
+            <div class="beat__head">
+              <span class="beat__num">1</span>
+              <h3 class="beat__title">One copy misses</h3>
+              <span class="beat__state" id="whip-beat-state-1">Waiting</span>
+            </div>
+            <p class="beat__lede">
+              Fixing the vinegar makes the map linear in the oil coordinates — that is the trapdoor, and it is the
+              only reason the signer can solve anything at all. But one copy offers only o unknowns against m
+              equations, so elimination runs out of unknowns and the last row reads 0 = something.
+            </p>
+            <div class="beat__body" id="whip-beat-body-1"></div>
+          </li>
+          <li class="beat" id="whip-beat-2" data-state="idle">
+            <div class="beat__head">
+              <span class="beat__num">2</span>
+              <h3 class="beat__title">Whipping adds room</h3>
+              <span class="beat__state" id="whip-beat-state-2">Waiting</span>
+            </div>
+            <p class="beat__lede">
+              Stir k copies of the same map together, each with its own vinegar and its own power of z. The oil
+              unknowns become k·o while the equation count stays at m, and every copy keeps the same hidden oil
+              space — so the system gets wider without losing the trapdoor.
+            </p>
+            <div class="beat__body" id="whip-beat-body-2"></div>
+          </li>
+          <li class="beat" id="whip-beat-3" data-state="idle">
+            <div class="beat__head">
+              <span class="beat__num">3</span>
+              <h3 class="beat__title">Solve and check</h3>
+              <span class="beat__state" id="whip-beat-state-3">Waiting</span>
+            </div>
+            <p class="beat__lede">
+              Now elimination finds oil coordinates, the signature is assembled from them, and the public whipped map
+              evaluated on that signature lands exactly on the target the message hashed to.
+            </p>
+            <div class="beat__body" id="whip-beat-body-3"></div>
+          </li>
+        </ol>
+
+        <details class="steps-full" id="whip-full">
+          <summary>Show the full signing algorithm</summary>
+          <p class="note">
+            The same run, opened out into the five operations the spec names. Nothing here is recomputed — these
+            panels and the three beats above are two views of one signature.
+          </p>
 
         <ol class="steps" id="whip-steps">
           <li class="step" id="whip-step-1" data-state="idle">
@@ -409,6 +458,7 @@
             </div>
           </li>
         </ol>
+        </details>
       </section>
 
       <section class="section" id="verify" aria-labelledby="verify-h">

@@ -699,9 +699,96 @@ tbody tr:last-child td {
 }
 
 .step,
+.beat,
 .card,
 .grid > * {
   min-width: 0;
+}
+
+/*
+ * The three beats are the default path through Exhibit 2, so they get more
+ * presence than the spec steps behind the disclosure: a heavier title and a
+ * roomier box. Same done/idle language as .step, since they are driven by the
+ * same state machine and a reader should recognise the pattern.
+ */
+.beats {
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.beat {
+  padding: clamp(1rem, 2.2vw, 1.35rem);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: var(--radius);
+  background-color: var(--panel-2);
+}
+
+.beat[data-state='done'] {
+  border-left-color: var(--accent);
+}
+
+.beat__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.beat__num {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--accent);
+}
+
+.beat__title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.beat__state {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.beat__lede {
+  margin: 0.55rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.98rem;
+}
+
+.beat__body:not(:empty) {
+  margin-top: 0.85rem;
+}
+
+/*
+ * The five spec operations. Available, clearly labelled, and not in the way of
+ * the three beats that carry the idea.
+ */
+.steps-full {
+  margin-top: 1.4rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--panel-2);
+}
+
+.steps-full > summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.steps-full > .note {
+  margin-top: 0.6rem;
 }
 
 .step {

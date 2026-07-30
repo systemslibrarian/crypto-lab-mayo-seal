@@ -66,20 +66,27 @@ async function driveKeygen(page: Page): Promise<void> {
   }
 }
 
-/** Exhibit 2: every step of the whipping walkthrough, plus its disclosure. */
+/**
+ * Exhibit 2: the three beats that form the default path, then the five spec
+ * operations behind the disclosure. Both are scanned — the steps are optional
+ * for a reader, not for the gate.
+ */
 async function driveWhip(page: Page): Promise<void> {
   await page.click('#whip-next');
-  await expect(page.locator('#whip-state-1')).toHaveText('Done');
+  await expect(page.locator('#whip-beat-state-1')).toHaveText('Done');
   await page.click('#whip-run');
-  await expect(page.locator('#whip-state-5')).toHaveText('Done');
+  await expect(page.locator('#whip-beat-state-3')).toHaveText('Done');
   await openEverything(page);
+  await expect(page.locator('#whip-state-5')).toHaveText('Done');
 }
 
 /** Exhibit 2 again, at real parameters, where the matrices are drawn as a corner. */
 async function driveWhipRealParams(page: Page): Promise<void> {
   await page.selectOption('#whip-params', 'MAYO1');
   await page.click('#whip-run');
-  await expect(page.locator('#whip-state-5')).toHaveText('Done', { timeout: 30_000 });
+  await expect(page.locator('#whip-beat-state-3')).toHaveText('Done', { timeout: 30_000 });
+  await expect(page.locator('#whip-beat-body-3 .verdict').first()).toContainText('P*(s) = t');
+  await openEverything(page);
   await expect(page.locator('#whip-body-5 .verdict').first()).toContainText('P*(s) = t');
 }
 

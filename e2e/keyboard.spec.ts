@@ -99,7 +99,8 @@ test('the demo can be driven from the keyboard alone', async ({ page }) => {
 
   await page.focus('#whip-next');
   await page.keyboard.press('Enter');
-  await expect(page.locator('#whip-state-1')).toHaveText('Done');
+  // The beats are the default path, so that is what a keyboard-only reader drives.
+  await expect(page.locator('#whip-beat-state-1')).toHaveText('Done');
 
   await page.focus('#vf-sign');
   await page.keyboard.press('Enter');
