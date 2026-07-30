@@ -78,12 +78,17 @@ test('the whipping figure is operable with the arrow keys and reports in text', 
   await page.keyboard.press('ArrowLeft');
   const after = await page.locator('#wv-readout').textContent();
   expect(after).not.toBe(before);
-  // At k = 1 the figure must say, in words, that the system cannot be solved.
+  // At k = 1 the figure must say, in words, that a target is usually out of reach
+  // — and must not claim it is impossible.
   await page.fill('#wv-k', '1');
   await page.dispatchEvent('#wv-k', 'input');
-  await expect(page.locator('#wv-readout')).toContainText('Not solvable');
+  await expect(page.locator('#wv-readout')).toContainText('Usually out of reach');
+  await expect(page.locator('#wv-readout')).toContainText('improbable, not impossible');
+  await expect(page.locator('#wv-readout')).not.toContainText('cannot sign');
+  // The exponent is spoken as words as well as drawn as a superscript.
+  await expect(page.locator('#wv-readout .pow .sr-only').first()).toContainText('to the power');
   // And the SVG's own accessible name must carry the same state.
-  await expect(page.locator('#wv-figure svg')).toHaveAttribute('aria-label', /too narrow to solve/);
+  await expect(page.locator('#wv-figure svg')).toHaveAttribute('aria-label', /usually out of reach/);
 });
 
 test('the demo can be driven from the keyboard alone', async ({ page }) => {
@@ -100,6 +105,14 @@ test('the demo can be driven from the keyboard alone', async ({ page }) => {
   await page.keyboard.press('Enter');
   await page.focus('#vf-verify');
   await page.keyboard.press('Space');
+  await expect(page.locator('#vf-out .verdict').first()).toContainText('VALID');
+
+  // Continuity: adopt the walkthrough's signature and verify that exact artifact.
+  await page.focus('#vf-adopt');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#vf-out .verdict').first()).toContainText('Adopted the');
+  await page.focus('#vf-verify');
+  await page.keyboard.press('Enter');
   await expect(page.locator('#vf-out .verdict').first()).toContainText('VALID');
 
   await page.focus('#fg-oil-nibble');

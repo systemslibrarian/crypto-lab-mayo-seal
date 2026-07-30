@@ -61,40 +61,89 @@ export function signatureBytes(n: number, k: number, saltBytes: number): number 
 }
 
 /**
- * The smallest whipping factor that makes signing possible at all: the signer
- * needs more unknowns than equations, so k·o > m.
+ * The smallest whipping factor that leaves the signer room to spare: k·o > m.
  *
  * Every shipped MAYO parameter set uses exactly this k — the whipping is turned
- * up just far enough to make the system solvable and not one copy further, since
- * each extra copy costs n more field elements of signature. The test suite
- * asserts that for MAYO1, MAYO2, MAYO3 and MAYO5.
+ * up just far enough and not one copy further, since each extra copy costs n more
+ * field elements of signature. The test suite asserts that for MAYO1, MAYO2,
+ * MAYO3 and MAYO5.
+ *
+ * Note what this is *not*: k·o > m does not guarantee that any particular
+ * signing attempt succeeds. It is the parameter-design condition that makes a
+ * draw overwhelmingly likely to have full row rank — see whipBalance.
  */
-export function smallestSolvableK(m: number, o: number): number {
+export function smallestKWithRoom(m: number, o: number): number {
   return Math.floor(m / o) + 1;
 }
 
+/**
+ * Probability that a uniformly random m×N matrix over GF(16) has rank m,
+ * ∏_{i<m} (1 − 16^(i−N)). Returns 0 when N < m, where full row rank is
+ * impossible.
+ *
+ * MAYO's signing matrix A is not literally uniform — it is built from the secret
+ * key and the vinegar draw — but this random-matrix model is the one the spec's
+ * own parameter choice reasons with, and it reproduces the restart probability
+ * the round-2 submission quotes.
+ */
+export function fullRowRankProbability(m: number, n: number): number {
+  if (n < m) return 0;
+  let p = 1;
+  for (let i = 0; i < m; i++) p *= 1 - 16 ** (i - n);
+  return p;
+}
+
+/** −log₂ of the chance a draw comes out rank-deficient, so signing must retry. */
+export function restartProbabilityBits(m: number, n: number): number {
+  const fail = 1 - fullRowRankProbability(m, n);
+  if (fail <= 0) return Number.POSITIVE_INFINITY;
+  return -Math.log2(fail);
+}
+
+export type WhipStatus = 'short' | 'exact' | 'slack';
+
 export interface WhipBalance {
   k: number;
-  /** Unknowns available to the signer. */
+  /** Oil unknowns available to the signer, k·o. */
   unknowns: number;
-  /** Equations that must be satisfied. */
+  /** Equations that must be satisfied, m. */
   equations: number;
-  /** Positive once there is room to solve; k·o − m. */
+  /** k·o − m: negative is short of the equations, positive is room to spare. */
   slack: number;
-  solvable: boolean;
+  /**
+   * 'short'  — fewer unknowns than equations. A random target is usually out of
+   *            reach, but not impossible: reachable with probability ≈ 16^slack.
+   * 'exact'  — as many unknowns as equations. A full-rank draw has exactly one
+   *            solution; MAYO does not sit here, it takes slack.
+   * 'slack'  — room to spare. A full-row-rank draw has 16^slack solutions.
+   */
+  status: WhipStatus;
+  /** For 'short': −log₂ of the chance a random target is hit at all. */
+  unreachableBits: number | null;
+  /** For 'exact'/'slack': −log₂ of the chance the draw is rank-deficient. */
+  restartBits: number | null;
   /** Signature cost at this k, in bytes. */
   signatureBytes: number;
 }
 
-/** The equations-versus-unknowns balance at a given whipping factor. */
+/**
+ * The equations-versus-unknowns balance at a given whipping factor, with the
+ * probabilities that make the claim honest rather than absolute.
+ */
 export function whipBalance(m: number, o: number, n: number, k: number, saltBytes: number): WhipBalance {
   const unknowns = k * o;
+  const slack = unknowns - m;
+  const status: WhipStatus = slack < 0 ? 'short' : slack === 0 ? 'exact' : 'slack';
   return {
     k,
     unknowns,
     equations: m,
-    slack: unknowns - m,
-    solvable: unknowns > m,
+    slack,
+    status,
+    // The image of a map into GF(16)^m from N < m unknowns covers at most a
+    // 16^N slice of the 16^m targets.
+    unreachableBits: status === 'short' ? 4 * (m - unknowns) : null,
+    restartBits: status === 'short' ? null : restartProbabilityBits(m, unknowns),
     signatureBytes: signatureBytes(n, k, saltBytes),
   };
 }

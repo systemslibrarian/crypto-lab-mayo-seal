@@ -74,6 +74,14 @@ async function driveVerifyValid(page: Page): Promise<void> {
   await expect(page.locator('#vf-out .verdict').first()).toContainText('VALID');
 }
 
+/** Exhibit 3 verifying the exact artifact Exhibit 2 produced. */
+async function driveVerifyAdopted(page: Page): Promise<void> {
+  await page.click('#vf-adopt');
+  await expect(page.locator('#vf-out .verdict').first()).toContainText('Adopted the');
+  await page.click('#vf-verify');
+  await expect(page.locator('#vf-out .verdict').first()).toContainText('VALID');
+}
+
 /** Exhibit 3, every rejecting path. */
 async function driveVerifyRejected(page: Page): Promise<void> {
   for (const button of ['#vf-tamper-sig', '#vf-tamper-salt', '#vf-tamper-msg']) {
@@ -128,6 +136,8 @@ async function driveAll(page: Page): Promise<void> {
   await scan(page, 'the whipping walkthrough at real parameters', '#whip');
   await driveVerifyValid(page);
   await scan(page, 'signature accepted', '#verify');
+  await driveVerifyAdopted(page);
+  await scan(page, 'verifying the walkthrough artifact', '#verify');
   await driveVerifyRejected(page);
   await scan(page, 'signature rejected', '#verify');
   await driveVerifyRealParams(page);

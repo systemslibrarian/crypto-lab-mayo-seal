@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { MAYO1, MAYO2, MAYO3, MAYO5, sizes, TOY } from './params';
 import {
   compareWithUov,
+  fullRowRankProbability,
   computeTradeoffs,
   publicKeyBytes,
   signatureBytes,
   sizeBreakdown,
-  smallestSolvableK,
+  restartProbabilityBits,
+  smallestKWithRoom,
   whipBalance,
 } from './uov';
 
@@ -55,35 +57,76 @@ describe('size ledger', () => {
 });
 
 describe('why k is what it is', () => {
-  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: k is exactly the smallest whipping factor that solves', (p) => {
+  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: k is exactly the smallest whipping factor with room to spare', (p) => {
     // The headline claim behind Exhibit 2's slider: the whipping is turned up
     // just far enough for k·o > m, and no further, because every extra copy adds
     // n more field elements to the signature.
-    expect(smallestSolvableK(p.m, p.o)).toBe(p.k);
+    expect(smallestKWithRoom(p.m, p.o)).toBe(p.k);
   });
 
-  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: one copy fewer is unsolvable, one more is dearer', (p) => {
+  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: one copy fewer is short, one more is dearer', (p) => {
     const below = whipBalance(p.m, p.o, p.n, p.k - 1, p.saltBytes);
     const at = whipBalance(p.m, p.o, p.n, p.k, p.saltBytes);
     const above = whipBalance(p.m, p.o, p.n, p.k + 1, p.saltBytes);
-    expect(below.solvable).toBe(false);
+    expect(below.status).toBe('short');
     expect(below.slack).toBeLessThanOrEqual(0);
-    expect(at.solvable).toBe(true);
-    expect(above.solvable).toBe(true);
+    expect(at.status).toBe('slack');
+    expect(above.status).toBe('slack');
     expect(above.signatureBytes).toBeGreaterThan(at.signatureBytes);
   });
 
   it('TOY: the same rule picks k = 3', () => {
-    expect(smallestSolvableK(TOY.m, TOY.o)).toBe(TOY.k);
+    expect(smallestKWithRoom(TOY.m, TOY.o)).toBe(TOY.k);
     expect(whipBalance(TOY.m, TOY.o, TOY.n, 1, TOY.saltBytes).slack).toBe(-3);
     expect(whipBalance(TOY.m, TOY.o, TOY.n, 2, TOY.saltBytes).slack).toBe(0);
     expect(whipBalance(TOY.m, TOY.o, TOY.n, 3, TOY.saltBytes).slack).toBe(3);
   });
 
-  it('k·o = m exactly is not enough', () => {
-    // m equations in m unknowns is square: solvable only when the matrix happens
-    // to be invertible, which is not something a signer can rely on.
-    expect(whipBalance(6, 3, 9, 2, 8).solvable).toBe(false);
+  it('distinguishes short, exact and slack rather than solvable / not solvable', () => {
+    const short = whipBalance(6, 3, 9, 1, 8);
+    expect(short.status).toBe('short');
+    // Not impossible — a random target is hit about once in 16³.
+    expect(short.unreachableBits).toBe(12);
+    expect(short.restartBits).toBeNull();
+
+    const exact = whipBalance(6, 3, 9, 2, 8);
+    expect(exact.status).toBe('exact');
+    expect(exact.unreachableBits).toBeNull();
+    // A square draw is invertible about 93% of the time, so it retries ~7%.
+    expect(exact.restartBits!).toBeGreaterThan(3);
+    expect(exact.restartBits!).toBeLessThan(4);
+
+    const slack = whipBalance(6, 3, 9, 3, 8);
+    expect(slack.status).toBe('slack');
+    expect(slack.slack).toBe(3);
+    expect(slack.restartBits!).toBeGreaterThan(15);
+  });
+
+  it('no shipped set claims a guarantee: every one can still need a retry', () => {
+    for (const p of [MAYO1, MAYO2, MAYO3, MAYO5]) {
+      const at = whipBalance(p.m, p.o, p.n, p.k, p.saltBytes);
+      expect(at.restartBits).not.toBeNull();
+      expect(Number.isFinite(at.restartBits!)).toBe(true);
+    }
+  });
+
+  it('reproduces the restart probability the round-2 spec quotes', () => {
+    // The change log says the round-2 parameters raise the SampleSolution failure
+    // probability to between 2⁻¹² and 2⁻²⁰ so implementations can test the retry
+    // path. Our random-matrix model lands inside that window for all four sets.
+    for (const p of [MAYO1, MAYO2, MAYO3, MAYO5]) {
+      const bits = restartProbabilityBits(p.m, p.k * p.o);
+      expect(bits, `${p.name}: 2^-${bits.toFixed(1)}`).toBeGreaterThan(11.5);
+      expect(bits, `${p.name}: 2^-${bits.toFixed(1)}`).toBeLessThan(20.5);
+    }
+  });
+
+  it('rank deficiency is impossible to rule out but easy to detect', () => {
+    // Fewer unknowns than equations can never have full row rank.
+    expect(fullRowRankProbability(6, 3)).toBe(0);
+    // And more unknowns never reaches certainty.
+    expect(fullRowRankProbability(6, 9)).toBeLessThan(1);
+    expect(fullRowRankProbability(6, 9)).toBeGreaterThan(0.99);
   });
 });
 

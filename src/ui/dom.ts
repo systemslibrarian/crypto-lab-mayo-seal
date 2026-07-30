@@ -55,6 +55,29 @@ export function superscript(n: number): string {
     .join('');
 }
 
+const SUBSCRIPTS = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+
+/** 12 → "₁₂", for naming the k copies x₁ … x_k. */
+export function subscript(n: number): string {
+  return String(n)
+    .split('')
+    .map((d) => SUBSCRIPTS[Number(d)] ?? d)
+    .join('');
+}
+
+/**
+ * A power like 16⁻³, rendered as a visible superscript plus a spoken form.
+ * Screen readers announce Unicode superscripts inconsistently — some read "16
+ * minus three", some skip the digits — so the words are in the DOM too.
+ */
+export function power(base: number, exponent: number): HTMLElement {
+  const spoken = exponent < 0 ? `minus ${Math.abs(exponent)}` : String(exponent);
+  return el('span', { class: 'pow' }, [
+    el('span', { 'aria-hidden': 'true', text: `${base}${superscript(exponent)}` }),
+    el('span', { class: 'sr-only', text: `${base} to the power ${spoken}` }),
+  ]);
+}
+
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB`;
@@ -137,11 +160,7 @@ export function matrixTable(m: Mat, opts: MatrixOptions): HTMLElement {
   const maxCols = Math.min(m.cols, opts.maxCols ?? m.cols);
   const truncated = maxRows < m.rows || maxCols < m.cols;
   const captionId = `matrix-caption-${++captionSeq}`;
-  const caption = el('p', {
-    class: 'table-caption',
-    id: captionId,
-    text: truncated ? `${opts.caption} — showing the first ${maxRows}×${maxCols} block` : opts.caption,
-  });
+  const caption = el('p', { class: 'table-caption', id: captionId, text: opts.caption });
   const table = el('table', { class: 'matrix', 'aria-labelledby': captionId });
 
   const headRow = el('tr', {}, [el('th', { scope: 'col', text: '' })]);
@@ -174,7 +193,54 @@ export function matrixTable(m: Mat, opts: MatrixOptions): HTMLElement {
     body.append(row);
   }
   table.append(body);
-  return el('div', { class: 'matrix-figure' }, [caption, scroller(opts.ariaLabel, table)]);
+  const figure = el('div', { class: 'matrix-figure' }, [caption, scroller(opts.ariaLabel, table)]);
+  if (truncated) figure.append(scaleMap(m.rows, m.cols, maxRows, maxCols));
+  return figure;
+}
+
+/**
+ * A caption alone does not convey how much of a matrix you are looking at. This
+ * draws the full matrix to scale with the displayed corner picked out, and states
+ * the entry count the computation actually used.
+ */
+function scaleMap(rows: number, cols: number, shownRows: number, shownCols: number): HTMLElement {
+  const w = 148;
+  const h = Math.max(26, Math.min(96, (w * rows) / cols));
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('width', String(w));
+  svg.setAttribute('height', String(Math.round(h)));
+  svg.setAttribute('role', 'img');
+  svg.setAttribute(
+    'aria-label',
+    `Scale map: the ${shownRows} by ${shownCols} block shown is the top-left corner of the full ${rows} by ${cols} matrix.`,
+  );
+  svg.classList.add('scale-map__svg');
+
+  const full = document.createElementNS(ns, 'rect');
+  full.setAttribute('x', '0.5');
+  full.setAttribute('y', '0.5');
+  full.setAttribute('width', String(w - 1));
+  full.setAttribute('height', String(h - 1));
+  full.classList.add('scale-map__full');
+  svg.append(full);
+
+  const part = document.createElementNS(ns, 'rect');
+  part.setAttribute('x', '0.5');
+  part.setAttribute('y', '0.5');
+  part.setAttribute('width', String(Math.max(3, ((w - 1) * shownCols) / cols)));
+  part.setAttribute('height', String(Math.max(3, ((h - 1) * shownRows) / rows)));
+  part.classList.add('scale-map__part');
+  svg.append(part);
+
+  return el('div', { class: 'scale-map' }, [
+    svg,
+    el('p', {
+      class: 'scale-map__text',
+      text: `Showing the top-left ${shownRows}×${shownCols} corner of the full ${rows}×${cols} matrix. The computation used all ${(rows * cols).toLocaleString()} entries.`,
+    }),
+  ]);
 }
 
 export interface VectorOptions {

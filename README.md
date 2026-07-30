@@ -25,7 +25,7 @@ where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. 
 ## Exhibits
 
 1. **Keygen: a needle small enough to shrink the haystack** — derive a keypair from a seed you choose, for the toy set or for any of MAYO1, MAYO2, MAYO3 and MAYO5. Shows what actually ships (a 16-byte seed plus the P⁽³⁾ block), what the verifier expands from that seed instead of downloading, and how much larger the same key would be with the whipping removed. For the toy set it also *computes* the trapdoor twice over: a random oil point mapped through the real public map comes out all zeros, and so does a random point of `Oᵏ` through the whipped map — the property whipping has to preserve for a solution to exist.
-2. **Sign: watch the too-small oil space become solvable** — opens with the mechanism as a figure: the signing system drawn as a block m rows tall and k·o columns wide, against the width it has to clear, with a **k slider**. Turn k down and the block falls short of the line with the shortfall bracketed; turn it up and it crosses. Switch parameter sets and the slider lands on a fact worth noticing — for MAYO1, MAYO2, MAYO3 and MAYO5 alike, the shipped k is *exactly* the smallest k with k·o > m, because every extra copy costs another ⌈n/2⌉ bytes of signature for nothing. That claim is asserted in the test suite, not just drawn.
+2. **Sign: watch too few oil variables become enough** — opens with the mechanism as a figure: the signing system drawn as a block m rows tall and k·o columns wide, against the width it has to clear, with a **k slider**. Turn k down and the block falls short of the line with the shortfall bracketed; turn it up and it crosses. The readout is careful about what the threshold does and does not promise, and computes both probabilities: below it a random target is reachable about once in `16^(m−k·o)` draws — improbable, not impossible — and above it a particular vinegar draw can still come out rank-deficient, which MAYO detects and retries. Our figure for that retry rate lands at 2⁻¹¹·⁹ for MAYO1/3/5 and 2⁻¹⁹·⁹ for MAYO2, inside the 2⁻¹² to 2⁻²⁰ window the round-2 submission quotes — a cross-check the suite asserts. Switch parameter sets and the slider lands on a fact worth noticing — for MAYO1, MAYO2, MAYO3 and MAYO5 alike, the shipped k is *exactly* the smallest k with k·o > m, because every extra copy costs another ⌈n/2⌉ bytes of signature for nothing. That claim is asserted in the test suite, not just drawn.
 
    Then the headline mechanism, stepped, on **any** of the offered parameter sets. Hash the message to a target `t`; fix the vinegar and try one unwhipped copy (at TOY: 6 equations in 3 unknowns, echelon form ending in a row that reads `0 = c`; at MAYO1: 78 in 8, same outcome); whip `k` copies, showing the spec's `Z` matrix of `z^ℓ` exponents; solve the same `m` equations in `k·o` unknowns; assemble `sᵢ = (vᵢ + O·xᵢ ‖ xᵢ)` and confirm `P*(s) = t`. At real parameters the matrices are drawn as a corner and the caption says which — the view is clipped, the computation is not, and the echelon view is anchored so the contradiction row stays on screen.
 3. **Verify: compute both sides, then try to fool it** — sign under any parameter set, then watch verification recompute `t` from the message and salt, evaluate `P*` on the signature, and print both vectors coordinate by coordinate. Three tamper buttons (flip a nibble in `s`, flip a bit in the salt, change the message under the signature) feed the *real* verifier and report which coordinate first disagrees.
@@ -39,6 +39,16 @@ where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. 
 - **Use MAYO2 over MAYO1** when the signature travels often and the key rarely (186 B versus 454 B, for 4912 B versus 1420 B of key).
 - **Do NOT use this code.** It is a teaching implementation: not constant-time, not reviewed, and not hardened. Use the reference implementation at [PQCMayo/MAYO-C](https://github.com/PQCMayo/MAYO-C).
 - **Do NOT use MAYO where ML-DSA already fits.** ML-DSA (FIPS 204) is standardised; MAYO is an on-ramp candidate still under evaluation, and the multivariate family has a history of parameter-level breaks.
+
+## What This Page Is Careful Not To Claim
+
+`k·o > m` is a parameter-design condition, not a guarantee. It is what makes a signing draw *overwhelmingly likely* to have full row rank — and the page says so in those terms, with the probabilities computed rather than asserted:
+
+- **Below the threshold** a random target is reachable about once in `16^(m−k·o)` draws. Improbable, not impossible.
+- **At the threshold** a square system has one solution when it is invertible, which a random draw is roughly 93% of the time.
+- **Above it** roughly one draw in `2^restart` is still rank-deficient; `Sign` re-draws the vinegar and tries again, exactly as spec Algorithm 7 does.
+
+Nor does width alone make a system easy. The figure spells out both causes: the secret oil space is what turns the quadratic map into a linear one, and whipping is what supplies enough variables. Neither is sufficient alone — a wide multivariate system with no trapdoor is precisely the problem MAYO's security rests on.
 
 ## What Can Go Wrong
 
@@ -58,7 +68,7 @@ MAYO is a NIST PQC additional-signatures on-ramp candidate, advanced to the seco
 ```bash
 npm install
 npm run dev            # http://localhost:5173/crypto-lab-mayo-seal/
-npm test               # 133 unit tests, including 6 reference KAT vectors
+npm test               # 136 unit tests, including 6 reference KAT vectors
 npm run build          # tsc --noEmit && vite build
 npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built site
 ```
@@ -73,7 +83,7 @@ npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built 
 
 ## Build & Verify
 
-**133 unit tests** (Vitest, colocated as `src/**/*.test.ts`), of which **6 are reference known-answer tests** taken from the round-2 submission's `KAT/PQCsignKAT_*.rsp` files — two vectors each for MAYO1 and MAYO2, one each for MAYO3 and MAYO5. Each KAT seeds the NIST AES-256-CTR-DRBG from the vector's `seed`, derives `seedsk` and the signing randomizer `R` from it in the harness's order, and asserts that our secret key, public key and `signature ‖ message` match the reference hex **byte for byte**, then that our verifier accepts.
+**136 unit tests** (Vitest, colocated as `src/**/*.test.ts`), of which **6 are reference known-answer tests** taken from the round-2 submission's `KAT/PQCsignKAT_*.rsp` files — two vectors each for MAYO1 and MAYO2, one each for MAYO3 and MAYO5. Each KAT seeds the NIST AES-256-CTR-DRBG from the vector's `seed`, derives `seedsk` and the signing randomizer `R` from it in the harness's order, and asserts that our secret key, public key and `signature ‖ message` match the reference hex **byte for byte**, then that our verifier accepts.
 
 The rest of the suite covers the field laws of GF(16), `Upper()` preserving the quadratic form, encoder round-trips at every length, the derived-size formulas against spec Table 2.1, irreducibility of all five `f(z)` and the `f ∤ det Z` condition, full rank of the emulsifier combinations, echelon-form invariants, `SampleSolution` correctness and its rank-deficiency refusal, `P` vanishing on `O` and `P*` on `Oᵏ`, accept-good / reject-every-bad for signatures (modified message, single-nibble edits across `s` and the salt, cross-key, all-zero, wrong lengths), and the size-ledger claims.
 
@@ -81,7 +91,7 @@ Files worth reading: `src/mayo/gf16.ts` (the field), `src/ui/whipviz.ts` (the k-
 
 **Accessibility gate:** `npm run test:a11y` runs eight Playwright tests against the production build.
 
-Two are axe scans asserting zero WCAG 2.1 A/AA violations in **both** themes, across nine driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough at toy and at real parameters, on an accepted signature, on each rejected one, under real parameters, after every forgery attempt and the malformed-input battery, after a reference-vector replay with the preconditions rechecked, and one whole-page pass with every exhibit in its final state), with every disclosure opened before each scan — an unscanned state is an ungated state.
+Two are axe scans asserting zero WCAG 2.1 A/AA violations in **both** themes, across ten driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough at toy and at real parameters, on an accepted signature, on the walkthrough's own artifact adopted into the verifier, on each rejected one, under real parameters, after every forgery attempt and the malformed-input battery, after a reference-vector replay with the preconditions rechecked, and one whole-page pass with every exhibit in its final state), with every disclosure opened before each scan — an unscanned state is an ungated state.
 
 Each interaction scan is scoped to the exhibit that changed, with the final pass covering landmarks, heading order and the shared chrome. That is not only faster: re-scanning the whole page after every interaction re-checks thousands of already-cleared nodes, and it was what pushed the sweep past its timeout on a CI runner once the walkthrough started rendering real-parameter matrices.
 

@@ -157,15 +157,16 @@
           <h1 class="cl-hero-title">MAYO Seal</h1>
           <p class="cl-hero-sub">MAYO · NIST PQC On-Ramp</p>
           <p class="cl-hero-desc">
-            Runs real MAYO keygen, signing and verification over GF(16) so you can watch an oil space that is far
-            too small to invert become solvable the moment k copies of the map are whipped together.
+            Runs real MAYO keygen, signing and verification over GF(16) so you can watch an oil space with far too few
+            variables to hit a target become workable the moment k copies of the map are whipped together.
           </p>
         </div>
         <aside class="cl-hero-why" aria-label="Why it matters">
           <span class="cl-hero-why-label">WHY IT MATTERS</span>
           <p class="cl-hero-why-text">
             Multivariate signatures are the fastest-verifying post-quantum option we have, but classic Oil-and-Vinegar
-            asks for a public key in the tens of kilobytes — too big for a TLS certificate chain. MAYO cuts that key
+            asks for a public key in the tens of kilobytes. That is too big for a certificate chain — the bundle of public
+            keys and signatures sent while setting up a secure connection, where every kilobyte costs latency. MAYO cuts that key
             by more than an order of magnitude without touching the signature's small size, which is why it sits on
             NIST's signature on-ramp.
           </p>
@@ -188,6 +189,42 @@
           it by <em>whipping</em>: it publicly stirs k copies of the same map together, so the signer gets k times as
           many unknowns to play with while the number of equations stays put.
         </p>
+
+        <div class="card card--viz">
+          <h3>The whole idea in one picture</h3>
+          <p>
+            The signing system is m rows tall and k·o columns wide. MAYO picks enough columns that a draw almost
+            always has full row rank, with solutions to spare. Turn k and watch the width cross the line — the numbers
+            are the real ones for the parameter set you pick, and both probabilities below are computed.
+          </p>
+          <ol class="causal" aria-label="Why the signer can solve">
+            <li><strong>Secret structure makes it linear.</strong> Fixing the vinegar and knowing the oil space O turns the quadratic map into a linear system A·x = y. Whipping does not do this — the trapdoor does.</li>
+            <li><strong>Whipping supplies enough variables.</strong> k copies turn o unknowns into k·o, while every copy keeps the same hidden oil space, so the trapdoor survives.</li>
+            <li><strong>Both together let the signer solve.</strong> Linear <em>and</em> wide enough. Neither one is sufficient: a wide system with no trapdoor is still a hard multivariate problem.</li>
+          </ol>
+            <div class="controls">
+              <div class="field">
+                <label for="wv-params">Parameter set</label>
+                <select id="wv-params">
+                  <option value="TOY" selected>TOY — m = 6, o = 3</option>
+                  <option value="MAYO1">MAYO1 — m = 78, o = 8</option>
+                  <option value="MAYO2">MAYO2 — m = 64, o = 17</option>
+                  <option value="MAYO3">MAYO3 — m = 108, o = 10</option>
+                  <option value="MAYO5">MAYO5 — m = 142, o = 12</option>
+                </select>
+              </div>
+              <div class="field field--grow">
+                <label for="wv-k">Whipping factor k — copies stirred together (<span id="wv-k-value">3</span>)</label>
+                <input id="wv-k" type="range" min="1" max="5" step="1" value="3" aria-describedby="wv-readout" />
+              </div>
+            </div>
+            <div id="wv-figure" class="wv-figure"></div>
+            <div id="wv-readout" role="status" aria-live="polite"></div>
+            <p class="note">
+              Exhibit 2 then runs this for real: the same relationship, but with an actual key, an actual message and
+              the actual Gaussian elimination.
+            </p>
+          </div>
 
         <details>
           <summary>Jargon, unpacked</summary>
@@ -213,6 +250,17 @@
               MAYO's new ingredient: fixed public matrices E⁰, E¹, … (multiplication by z, z², … in a finite field)
               that combine k copies of the map into one map with the same m outputs but k·n inputs.
             </dd>
+            <dt>Rank</dt>
+            <dd>
+              The number of genuinely independent equations in a system. Six equations with rank four contain two
+              that add no information. A signer needs the rank to equal m, and MAYO checks rather than assumes it.
+            </dd>
+            <dt>"Vanishes on O"</dt>
+            <dd>
+              Every point of the secret oil space maps to zero under the public map — all m outputs are zero at once.
+              That is what lets the signer move along the oil space without disturbing the equations, and Exhibit 1
+              computes it rather than claiming it.
+            </dd>
             <dt>Salt, target t</dt>
             <dd>
               The message digest plus a per-signature salt are hashed into the target vector t ∈ GF(16)ᵐ. Hitting t
@@ -229,7 +277,8 @@
             <li><a href="#verify">3 · Verify and tamper</a></li>
             <li><a href="#forge">4 · Try to forge one</a></li>
             <li><a href="#ledger">5 · UOV versus MAYO</a></li>
-            <li><a href="#real">6 · Reference vectors &amp; preconditions</a></li>
+            <li><a href="#real">6 · Proof lab</a></li>
+            <li><a href="#recap">Recap</a></li>
           </ol>
         </nav>
 
@@ -272,40 +321,13 @@
 
       <section class="section" id="whip" aria-labelledby="whip-h">
         <p class="kicker">Exhibit 2 — the headline mechanism</p>
-        <h2 id="whip-h">Sign: watch the too-small oil space become solvable</h2>
+        <h2 id="whip-h">Sign: watch too few oil variables become enough</h2>
         <p class="lede">
           This is the whole idea, run step by step. With one copy of the map the signer faces m equations in only o
           unknowns and almost always fails; whip k copies together and it is the same m equations in k·o unknowns.
           Start on the toy parameters, where every number fits on screen, then run the identical walkthrough on real
           MAYO1 or MAYO2 — the matrices are drawn as a corner there, but every number in them is the real one.
         </p>
-
-        <div class="card card--viz">
-          <h3>The whole idea in one picture</h3>
-          <p>
-            The signing system is m rows tall and k·o columns wide, and it is solvable exactly when it is wider than
-            it is tall. Turn k and watch the width cross the line. The numbers are the real ones for the parameter set
-            you pick, and the verdict is the real inequality the signer faces.
-          </p>
-          <div class="controls">
-            <div class="field">
-              <label for="wv-params">Parameter set</label>
-              <select id="wv-params">
-                <option value="TOY" selected>TOY — m = 6, o = 3</option>
-                <option value="MAYO1">MAYO1 — m = 78, o = 8</option>
-                <option value="MAYO2">MAYO2 — m = 64, o = 17</option>
-                <option value="MAYO3">MAYO3 — m = 108, o = 10</option>
-                <option value="MAYO5">MAYO5 — m = 142, o = 12</option>
-              </select>
-            </div>
-            <div class="field field--grow">
-              <label for="wv-k">Whipping factor k — copies stirred together (<span id="wv-k-value">3</span>)</label>
-              <input id="wv-k" type="range" min="1" max="5" step="1" value="3" aria-describedby="wv-readout" />
-            </div>
-          </div>
-          <div id="wv-figure" class="wv-figure"></div>
-          <div id="wv-readout" role="status" aria-live="polite"></div>
-        </div>
 
         <div class="controls">
           <div class="field">
@@ -413,6 +435,7 @@
         </div>
 
         <div class="btn-row">
+          <button class="btn btn--ghost" id="vf-adopt" type="button" title="Pulls the key, message and signature from Exhibit 2 into this panel.">Use the signature from Exhibit 2</button>
           <button class="btn btn--ghost" id="vf-verify" type="button">Verify</button>
           <button class="btn btn--danger" id="vf-tamper-sig" type="button">Flip a nibble in s</button>
           <button class="btn btn--danger" id="vf-tamper-salt" type="button">Flip a bit in the salt</button>
@@ -477,8 +500,16 @@
         <div id="ledger-tradeoff"></div>
       </section>
 
+      <div class="divider">
+        <h2 class="divider__title">Proof lab</h2>
+        <p class="divider__text">
+          Everything above teaches the idea. What follows answers a different question — how do you know this page is
+          telling you the truth? None of it is required to understand MAYO.
+        </p>
+      </div>
+
       <section class="section" id="real" aria-labelledby="real-h">
-        <p class="kicker">Exhibit 6</p>
+        <p class="kicker">Exhibit 6 — proof lab</p>
         <h2 id="real-h">The real thing: reference vectors and preconditions, checked here</h2>
         <p class="lede">
           The same code that drives the toy exhibits runs the shipped MAYO parameter sets. Pick a vector from the
@@ -519,6 +550,50 @@
         </div>
 
         <div id="pc-out" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="section" id="recap" aria-labelledby="recap-h">
+        <p class="kicker">Recap</p>
+        <h2 id="recap-h">MAYO in four lines</h2>
+        <p class="lede">
+          If you remember nothing else from this page, remember these. Each one is something you watched happen above,
+          not something you were told.
+        </p>
+        <div class="grid grid--2">
+          <div class="card">
+            <h3>1 · The problem</h3>
+            <p>
+              Oil-and-Vinegar signing needs at least as many oil unknowns as there are equations, so o ≥ m. The shipped
+              part of the public key grows with o², which is why classic UOV keys run to tens of kilobytes.
+            </p>
+          </div>
+          <div class="card">
+            <h3>2 · The compression</h3>
+            <p>
+              MAYO shrinks o far below m. That makes the key small — and it breaks signing, because one copy of the map
+              no longer offers enough unknowns to hit a target.
+            </p>
+          </div>
+          <div class="card">
+            <h3>3 · The repair</h3>
+            <p>
+              Whipping stirs k copies together with fixed public matrices. The signer now has k·o unknowns against the
+              same m equations, and because every copy keeps the same hidden oil space, the trapdoor survives intact.
+            </p>
+          </div>
+          <div class="card">
+            <h3>4 · The cost</h3>
+            <p>
+              A compact public key, paid for with a longer signature: k blocks of n field elements instead of one. Each
+              shipped set picks the smallest k with k·o &gt; m, so it buys room and nothing more.
+            </p>
+          </div>
+        </div>
+        <p class="note">
+          One thing the picture can mislead you about: a wide system is not automatically an easy one. Width only helps
+          because the secret oil space already turned the quadratic map into a linear one. Without the trapdoor, k·o
+          unknowns would leave you facing exactly the multivariate problem MAYO's security rests on.
+        </p>
       </section>
 
       <section class="section" id="scope" aria-labelledby="scope-h">

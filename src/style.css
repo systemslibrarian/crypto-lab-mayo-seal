@@ -838,6 +838,28 @@ tbody tr:last-child td {
   color: var(--alarm);
 }
 
+.wv-verdict.is-warn .wv-verdict__icon {
+  color: var(--warn);
+}
+
+/* The two-cause chain: why the signer can solve and a forger still cannot. */
+.causal {
+  margin: 1rem 0 0;
+  padding: 0 0 0 1.2rem;
+  display: grid;
+  gap: 0.5rem;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+.causal strong {
+  color: var(--text);
+}
+
+.pow {
+  white-space: nowrap;
+}
+
 input[type='range'] {
   width: 100%;
   min-height: 44px;
@@ -845,6 +867,27 @@ input[type='range'] {
   accent-color: var(--accent);
   background-color: transparent;
   border: 0;
+}
+
+/* ---------- section divider ---------- */
+
+.divider {
+  margin-top: clamp(1.6rem, 4vw, 2.6rem);
+  padding-top: 1.1rem;
+  border-top: 2px solid var(--border-strong);
+}
+
+.divider__title {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+  letter-spacing: 0.02em;
+}
+
+.divider__text {
+  margin: 0.4rem 0 0;
+  color: var(--text-dim);
+  max-width: 74ch;
+  font-size: 0.95rem;
 }
 
 /* ---------- exhibit jump nav ---------- */
@@ -877,6 +920,39 @@ input[type='range'] {
   padding: 0;
   list-style: none;
   font-size: 0.92rem;
+}
+
+/* ---------- matrix scale map ---------- */
+
+.scale-map {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.55rem;
+}
+
+.scale-map__svg {
+  flex: 0 0 auto;
+}
+
+.scale-map__full {
+  fill: var(--bg-2);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.scale-map__part {
+  fill: color-mix(in oklab, var(--accent) 45%, var(--bg-2));
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.scale-map__text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  max-width: 52ch;
 }
 
 /* ---------- pass/fail check list ---------- */

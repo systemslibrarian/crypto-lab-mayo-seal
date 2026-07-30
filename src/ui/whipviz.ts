@@ -1,19 +1,22 @@
 /**
  * The whole idea in one picture.
  *
- * The signing system is m rows tall and k·o columns wide. It is solvable exactly
- * when it is *wider than it is tall* — when the k copies together supply more
- * unknowns than there are equations. So the diagram draws the system's width
- * against that threshold and lets you turn k with a slider. Nothing is stylised:
- * the widths are the real k·o and m for the selected parameter set, and the
- * verdict is the real inequality the signer faces.
+ * The signing system is m rows tall and k·o columns wide, and MAYO's parameter
+ * choice is about the ratio: enough columns that a draw is overwhelmingly likely
+ * to have full row rank, with solutions to spare. So the diagram draws the
+ * system's width against that threshold and lets you turn k with a slider.
+ *
+ * The readout is careful about what the threshold does and does not promise.
+ * Below it a random target is improbable, not impossible; above it a particular
+ * vinegar draw can still come out rank-deficient, which MAYO detects and retries.
+ * Both probabilities are computed, not asserted.
  *
  * The picture is never the only channel — the same numbers are printed beside it
  * and the SVG carries a live text description.
  */
 import { PARAM_SETS, type MayoParams, type ParamSetName } from '../mayo/params';
-import { smallestSolvableK, whipBalance } from '../mayo/uov';
-import { byId, clear, el, superscript } from './dom';
+import { smallestKWithRoom, whipBalance, type WhipBalance } from '../mayo/uov';
+import { byId, clear, el, power, subscript } from './dom';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -34,7 +37,7 @@ export function initWhipViz(): void {
   const readout = byId('wv-readout');
 
   const configure = (p: MayoParams): void => {
-    // Show one copy short of solvable through two past the shipped choice.
+    // One copy short of having room, through two past the shipped choice.
     const max = Math.max(p.k + 2, 4);
     slider.min = '1';
     slider.max = String(max);
@@ -46,12 +49,12 @@ export function initWhipViz(): void {
     const p = PARAM_SETS[select.value as ParamSetName];
     const k = Number(slider.value);
     const balance = whipBalance(p.m, p.o, p.n, k, p.saltBytes);
-    const smallest = smallestSolvableK(p.m, p.o);
+    const smallest = smallestKWithRoom(p.m, p.o);
 
     kValue.textContent = String(k);
     slider.setAttribute('aria-valuetext', `k = ${k}`);
     clear(figure);
-    figure.append(renderFigure(p, k, balance.solvable));
+    figure.append(renderFigure(p, k, balance.status === 'slack'));
 
     clear(readout);
     readout.append(
@@ -61,21 +64,14 @@ export function initWhipViz(): void {
         stat(balance.slack >= 0 ? 'room to spare' : 'short by', String(Math.abs(balance.slack))),
         stat('signature', `${balance.signatureBytes} B`),
       ]),
-      el('p', { class: `wv-verdict ${balance.solvable ? 'is-ok' : 'is-bad'}` }, [
-        el('span', { class: 'wv-verdict__icon', 'aria-hidden': 'true', text: balance.solvable ? '✓' : '✗' }),
-        document.createTextNode(
-          balance.solvable
-            ? `Solvable: ${balance.unknowns} unknowns against ${balance.equations} equations. The signer has ${balance.slack} coordinates of freedom, so 16${superscript(balance.slack)} signatures exist for this message.`
-            : `Not solvable: ${balance.unknowns} unknowns cannot satisfy ${balance.equations} equations. A random target is out of reach — this is the wall MAYO's small oil space runs into.`,
-        ),
-      ]),
+      renderBalanceVerdict(balance),
       el('p', {
         class: 'note',
         text:
           k === smallest
-            ? `k = ${smallest} is the smallest whipping factor with k·o > m, and it is exactly the k that ${p.name} ships. Every extra copy would add n = ${p.n} more field elements to the signature for no benefit.`
+            ? `k = ${smallest} is the smallest whipping factor with k·o > m, and it is exactly the k that ${p.name} ships. Every extra copy would add n = ${p.n} more field elements to the signature for no extra room.`
             : k < smallest
-              ? `${p.name} needs at least k = ${smallest} for k·o > m. Below that the signer cannot sign at all.`
+              ? `${p.name} ships k = ${smallest}, the smallest k with k·o > m. Below that the signer is not blocked by a theorem — it is blocked by the odds.`
               : `This works, but it is wasteful: ${p.name} ships k = ${smallest}, and each copy beyond it costs another ⌈n/2⌉ = ${Math.ceil(p.n / 2)} bytes of signature.`,
       }),
     );
@@ -96,10 +92,54 @@ function stat(label: string, value: string): HTMLElement {
 }
 
 /**
+ * Three states, not two. "Solvable / not solvable" was wrong in both directions:
+ * below the threshold a target is improbable rather than impossible, and above it
+ * a particular draw can still come out rank-deficient and be retried.
+ */
+function renderBalanceVerdict(balance: WhipBalance): HTMLElement {
+  const kind = balance.status === 'slack' ? 'is-ok' : balance.status === 'exact' ? 'is-warn' : 'is-bad';
+  const icon = balance.status === 'slack' ? '✓' : balance.status === 'exact' ? '!' : '✗';
+
+  const line = el('p', { class: `wv-verdict ${kind}` }, [
+    el('span', { class: 'wv-verdict__icon', 'aria-hidden': 'true', text: icon }),
+  ]);
+  // One wrapper: the clauses must flow as a sentence, not become flex items.
+  const sentence = el('span');
+  line.append(sentence);
+
+  if (balance.status === 'short') {
+    sentence.append(
+      document.createTextNode(
+        `Usually out of reach: ${balance.unknowns} unknowns for ${balance.equations} equations. A random target is hit about once in `,
+      ),
+      power(16, balance.slack),
+      document.createTextNode(' draws — improbable, not impossible.'),
+    );
+  } else if (balance.status === 'exact') {
+    sentence.append(
+      document.createTextNode(
+        `Exactly enough: ${balance.unknowns} unknowns for ${balance.equations} equations. A full-rank draw has one solution, but about one draw in `,
+      ),
+      power(2, Math.round(balance.restartBits!)),
+      document.createTextNode(' is rank-deficient and has to be retried. MAYO takes slack instead of balancing here.'),
+    );
+  } else {
+    sentence.append(
+      document.createTextNode(`Room to spare: ${balance.unknowns} unknowns for ${balance.equations} equations. A full-row-rank draw has `),
+      power(16, balance.slack),
+      document.createTextNode(' solutions to choose from; roughly one draw in '),
+      power(2, Math.round(balance.restartBits!)),
+      document.createTextNode(' still comes out rank-deficient, and Sign re-draws the vinegar when it does.'),
+    );
+  }
+  return line;
+}
+
+/**
  * Draws the k copies as o-wide blocks, the assembled system as one k·o-wide
  * block, and the m-tall threshold the width has to clear.
  */
-function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElement {
+function renderFigure(p: MayoParams, k: number, hasRoom: boolean): SVGSVGElement {
   const width = 720;
   const height = 260;
   const pad = 16;
@@ -117,7 +157,7 @@ function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElemen
     viewBox: `0 0 ${width} ${height}`,
     width: '100%',
     role: 'img',
-    'aria-label': `Diagram: ${k} whipped ${k === 1 ? 'copy' : 'copies'} of the map contribute ${k * p.o} unknown${k * p.o === 1 ? '' : 's'} in total, against ${p.m} equations. ${solvable ? 'The system is wide enough to solve.' : 'The system is too narrow to solve.'}`,
+    'aria-label': `Diagram: ${k} whipped ${k === 1 ? 'copy' : 'copies'} of the map contribute ${k * p.o} unknown${k * p.o === 1 ? '' : 's'} in total, against ${p.m} equations. ${hasRoom ? 'The system is wider than it is tall, so a full-rank draw has solutions to spare.' : 'The system is narrower than it is tall, so a random target is usually out of reach.'}`,
   });
   root.classList.add('wv-svg');
 
@@ -126,7 +166,14 @@ function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElemen
   root.append(title);
 
   // --- top row: the k copies, each contributing o oil columns ---
-  root.append(text(pad, rowY - 12, `${k} ${k === 1 ? 'copy' : 'copies'} of the map, each contributing o = ${p.o} oil unknowns`, 'wv-label'));
+  root.append(
+    text(
+      pad,
+      rowY - 12,
+      `${k} ${k === 1 ? 'copy' : 'copies'} of the map, each contributing o = ${p.o} oil unknowns`,
+      'wv-label',
+    ),
+  );
 
   for (let i = 0; i < k; i++) {
     const x = pad + i * p.o * scale;
@@ -141,7 +188,7 @@ function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElemen
     block.classList.add('wv-copy');
     root.append(block);
     if (w > 34) {
-      root.append(text(x + w / 2, rowY + rowH / 2 + 5, `z${superscript(i)}`, 'wv-copy-label', 'middle'));
+      root.append(text(x + w / 2, rowY + rowH / 2 + 5, `x${subscript(i + 1)}`, 'wv-copy-label', 'middle'));
     }
   }
 
@@ -152,7 +199,7 @@ function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElemen
   root.append(text(pad, barY - 12, `assembled system: ${k}·${p.o} = ${k * p.o} columns wide, ${p.m} rows tall`, 'wv-label'));
 
   const assembled = svg('rect', { x: pad, y: barY, width: assembledW, height: barH, rx: 4 });
-  assembled.classList.add('wv-assembled', solvable ? 'is-ok' : 'is-bad');
+  assembled.classList.add('wv-assembled', hasRoom ? 'is-ok' : 'is-bad');
   root.append(assembled);
 
   // The threshold: the width the system must exceed to have solutions.
@@ -160,6 +207,14 @@ function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElemen
   line.classList.add('wv-threshold');
   root.append(line);
   root.append(text(thresholdX + 6, barY + barH + 26, `m = ${p.m} equations`, 'wv-threshold-label'));
+  root.append(
+    text(
+      pad,
+      height - 6,
+      'Each copy also gets its own power of z when the copies are stirred together — step 3 shows which.',
+      'wv-threshold-label',
+    ),
+  );
 
   // Slack / shortfall bracket between the two.
   const slackStart = Math.min(pad + assembledW, thresholdX);
@@ -172,7 +227,7 @@ function renderFigure(p: MayoParams, k: number, solvable: boolean): SVGSVGElemen
       height: 6,
       rx: 3,
     });
-    brace.classList.add(solvable ? 'wv-slack' : 'wv-short');
+    brace.classList.add(hasRoom ? 'wv-slack' : 'wv-short');
     root.append(brace);
   }
 

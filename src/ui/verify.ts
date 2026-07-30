@@ -7,10 +7,12 @@
 import { PARAM_SETS, sizes, type MayoParams, type ParamSetName } from '../mayo/params';
 import { keypair, sign, verify, type ExpandedPublicKey, type ExpandedSecretKey } from '../mayo/mayo';
 import { byId, clear, compareLegend, el, formatMs, hex, statList, vectorList, verdict } from './dom';
+import { walkthroughArtifact } from './whip';
 
 interface State {
   p: MayoParams;
-  sk: ExpandedSecretKey;
+  /** Null for a signature adopted from Exhibit 2 — verification needs no secret. */
+  sk: ExpandedSecretKey | null;
   pk: ExpandedPublicKey;
   /** The message the signature was made over. */
   signedMessage: string;
@@ -121,6 +123,48 @@ export function initVerify(): void {
 
   byId('vf-sign').addEventListener('click', doSign);
   byId('vf-verify').addEventListener('click', doVerify);
+
+  // Continuity: rather than making yet another key, adopt the artifact Exhibit 2
+  // just built, so "is this the same signature I watched being made?" has an
+  // answer.
+  byId('vf-adopt').addEventListener('click', () => {
+    const artifact = walkthroughArtifact();
+    if (!artifact) {
+      clear(out);
+      out.append(
+        verdict(
+          'idle',
+          'Exhibit 2 has not produced a signature yet',
+          'Run the walkthrough above — even one step forward is enough — and then come back.',
+        ),
+      );
+      return;
+    }
+    select.value = artifact.p.name;
+    msgInput.value = artifact.message;
+    state = {
+      p: artifact.p,
+      // Verification never needs the secret key; this panel only holds one so it
+      // can sign again on demand.
+      sk: null,
+      pk: artifact.pk,
+      signedMessage: artifact.message,
+      claimedMessage: artifact.message,
+      sig: artifact.sig.slice(),
+      changes: [],
+    };
+    clear(out);
+    out.append(
+      verdict(
+        'idle',
+        `Adopted the ${artifact.p.name} signature from Exhibit 2`,
+        'Same key, same message, same bytes you watched being assembled. Verify it, then break it.',
+      ),
+      renderStats(state),
+      el('p', { class: 'field-label', text: 'Signature (s ‖ salt)' }),
+      el('pre', { class: 'hexblock', text: hex(state.sig, 64) }),
+    );
+  });
 
   byId('vf-tamper-sig').addEventListener('click', () =>
     tamper('Flipped one nibble inside s.', (s) => {

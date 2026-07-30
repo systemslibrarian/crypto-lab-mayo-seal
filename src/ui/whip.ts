@@ -53,6 +53,22 @@ interface State {
 
 let state: State | null = null;
 
+export interface WalkthroughArtifact {
+  p: MayoParams;
+  pk: ExpandedPublicKey;
+  message: string;
+  sig: Uint8Array;
+}
+
+/**
+ * The signature the walkthrough most recently produced, for Exhibit 3 to verify.
+ * Null until the learner has stepped far enough to have one.
+ */
+export function walkthroughArtifact(): WalkthroughArtifact | null {
+  if (!state) return null;
+  return { p: state.p, pk: state.keys.pk, message: state.message, sig: state.result.sig };
+}
+
 export function initWhip(): void {
   const msgInput = byId<HTMLInputElement>('whip-msg');
   const setSelect = byId<HTMLSelectElement>('whip-params');

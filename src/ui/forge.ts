@@ -14,7 +14,7 @@ import {
   type OilSpaceAttempt,
   type OilSpaceMode,
 } from '../mayo/forge';
-import { bar, byId, clear, compareLegend, el, formatMs, statList, superscript, vectorList, verdict } from './dom';
+import { bar, byId, clear, compareLegend, el, formatMs, power, statList, superscript, vectorList, verdict } from './dom';
 
 interface Session {
   p: MayoParams;
@@ -95,7 +95,15 @@ function renderGuess(p: MayoParams, result: GuessResult): HTMLElement {
         : `0 forgeries in ${result.attempts.toLocaleString()} guesses — the best one matched ${result.bestMatch} of ${p.m} coordinates`,
       result.forged
         ? 'This should take 16^m attempts on average; seeing it here means something is wrong.'
-        : `Each coordinate lands by luck one time in sixteen, so a full hit needs about 16${superscript(p.m)} = 2${superscript(result.expectedWorkBits)} guesses. Partial credit is worth nothing: the verifier compares all ${p.m} coordinates.`,
+        : el('p', {}, [
+            document.createTextNode('Each coordinate lands by luck one time in sixteen, so a full hit needs about '),
+            power(16, p.m),
+            document.createTextNode(' = '),
+            power(2, result.expectedWorkBits),
+            document.createTextNode(
+              ` guesses. Partial credit is worth nothing: the verifier compares all ${p.m} coordinates.`,
+            ),
+          ]),
     ),
     statList([
       { label: 'guesses', value: result.attempts.toLocaleString() },
