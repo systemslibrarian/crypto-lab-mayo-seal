@@ -14,7 +14,7 @@ import {
   type OilSpaceAttempt,
   type OilSpaceMode,
 } from '../mayo/forge';
-import { bar, byId, clear, el, formatMs, statList, superscript, vectorList, verdict } from './dom';
+import { bar, byId, clear, compareLegend, el, formatMs, statList, superscript, vectorList, verdict } from './dom';
 
 interface Session {
   p: MayoParams;
@@ -117,6 +117,7 @@ function renderGuess(p: MayoParams, result: GuessResult): HTMLElement {
     }),
     el('p', { class: 'field-label', text: 't for the guessed salt' }),
     vectorList(result.bestT, { ariaLabel: 'the target for the guessed salt', maxItems: 80 }),
+    compareLegend(),
   ]);
 
   const histogram = el('div', { class: 'card' }, [el('h3', { text: 'How many coordinates each guess matched' })]);
@@ -187,6 +188,7 @@ function renderOilAttempt(p: MayoParams, attempt: OilSpaceAttempt): HTMLElement 
     }),
     el('p', { class: 'field-label', text: 't — what a valid signature had to hit' }),
     vectorList(attempt.result.t, { ariaLabel: 'target vector t', maxItems: 80 }),
+    compareLegend(),
   );
   return holder;
 }

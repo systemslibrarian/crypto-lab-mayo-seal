@@ -8,6 +8,7 @@ import {
   bar,
   byId,
   clear,
+  disclosure,
   el,
   formatBytes,
   formatMs,
@@ -204,23 +205,28 @@ function renderTrapdoor(p: MayoParams, o: ReturnType<typeof compactKeyGen>['o'],
     ),
   ]);
 
-  const pa = pMats[0];
+  const paTable = matrixTable(pMats[0], {
+    caption: 'P₀ — the first of the m public matrices. The bottom-left block is zero: no oil coordinate ever multiplies another.',
+    ariaLabel: 'first public matrix',
+    cell: (i, j) => {
+      const v = p.n - p.o;
+      if (i >= v && j >= v) return { cls: 'cell--oilblock', title: 'oil × oil (P⁽³⁾)' };
+      if (i >= v) return { title: 'structurally zero: oil × vinegar below the diagonal' };
+      return undefined;
+    },
+  });
+
   card.append(
-    matrixTable(pa, {
-      caption: 'P₀ — the first of the m public matrices. The bottom-left block is zero: no oil coordinate ever multiplies another.',
-      ariaLabel: 'first public matrix',
-      cell: (i, j) => {
-        const v = p.n - p.o;
-        if (i >= v && j >= v) return { cls: 'cell--oilblock', title: 'oil × oil (P⁽³⁾)' };
-        if (i >= v) return { title: 'structurally zero: oil × vinegar below the diagonal' };
-        return undefined;
-      },
-    }),
-  );
-  card.append(
-    el('ul', { class: 'legend', role: 'list' }, [
-      el('li', { role: 'listitem' }, [el('span', { class: 'swatch swatch--oil', 'aria-hidden': 'true' }), 'oil × oil block (P⁽³⁾)']),
-    ]),
+    disclosure(
+      'Show the public matrix that makes it work',
+      paTable,
+      el('ul', { class: 'legend', role: 'list' }, [
+        el('li', { role: 'listitem' }, [
+          el('span', { class: 'swatch swatch--oil', 'aria-hidden': 'true' }),
+          'oil × oil block (P⁽³⁾)',
+        ]),
+      ]),
+    ),
   );
   return card;
 }

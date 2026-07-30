@@ -280,6 +280,33 @@
           and read the two systems side by side.
         </p>
 
+        <div class="card card--viz">
+          <h3>The whole idea in one picture</h3>
+          <p>
+            The signing system is m rows tall and k·o columns wide, and it is solvable exactly when it is wider than
+            it is tall. Turn k and watch the width cross the line. The numbers are the real ones for the parameter set
+            you pick, and the verdict is the real inequality the signer faces.
+          </p>
+          <div class="controls">
+            <div class="field">
+              <label for="wv-params">Parameter set</label>
+              <select id="wv-params">
+                <option value="TOY" selected>TOY — m = 6, o = 3</option>
+                <option value="MAYO1">MAYO1 — m = 78, o = 8</option>
+                <option value="MAYO2">MAYO2 — m = 64, o = 17</option>
+                <option value="MAYO3">MAYO3 — m = 108, o = 10</option>
+                <option value="MAYO5">MAYO5 — m = 142, o = 12</option>
+              </select>
+            </div>
+            <div class="field field--grow">
+              <label for="wv-k">Whipping factor k — copies stirred together (<span id="wv-k-value">3</span>)</label>
+              <input id="wv-k" type="range" min="1" max="5" step="1" value="3" aria-describedby="wv-readout" />
+            </div>
+          </div>
+          <div id="wv-figure" class="wv-figure"></div>
+          <div id="wv-readout" role="status" aria-live="polite"></div>
+        </div>
+
         <div class="controls">
           <div class="field field--grow">
             <label for="whip-msg">Message to sign</label>

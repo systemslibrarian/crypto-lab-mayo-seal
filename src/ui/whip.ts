@@ -18,7 +18,7 @@ import {
   type SignResult,
 } from '../mayo/mayo';
 import { emulsifierMatrix, whipPairs } from '../mayo/whip';
-import { byId, el, hex, matrixTable, superscript, tableFigure, vectorList, verdict } from './dom';
+import { byId, compareLegend, disclosure, el, hex, matrixTable, superscript, tableFigure, vectorList, verdict } from './dom';
 
 const p = TOY;
 const TOTAL_STEPS = 5;
@@ -250,21 +250,24 @@ function renderSolve(target: HTMLElement, s: State): void {
       rhs: { label: 'y', values: system.y },
       colLabels: Array.from({ length: system.a.cols }, (_, j) => `${Math.floor(j / p.o) + 1}.${j % p.o}`),
     }),
-    matrixTable(echelon, {
-      caption: 'Echelon form of (A | y) with leading ones. Every row found a pivot, so the system has solutions.',
-      ariaLabel: 'echelon form of the whipped system',
-      colLabels: [...Array.from({ length: system.a.cols }, (_, j) => String(j)), 'y'],
-      cell: (i, j) => {
-        if (pivotCols[i] === j) return { cls: 'cell--pivot', marker: '*', title: 'pivot' };
-        return j === system.a.cols ? { cls: 'cell--rhs' } : undefined;
-      },
-    }),
-    el('ul', { class: 'legend', role: 'list' }, [
-      el('li', { role: 'listitem' }, [
-        el('span', { class: 'swatch swatch--pivot', 'aria-hidden': 'true' }),
-        'pivot, also marked *',
+    disclosure(
+      'Show the Gaussian elimination',
+      matrixTable(echelon, {
+        caption: 'Echelon form of (A | y) with leading ones. Every row found a pivot, so the system has solutions.',
+        ariaLabel: 'echelon form of the whipped system',
+        colLabels: [...Array.from({ length: system.a.cols }, (_, j) => String(j)), 'y'],
+        cell: (i, j) => {
+          if (pivotCols[i] === j) return { cls: 'cell--pivot', marker: '*', title: 'pivot' };
+          return j === system.a.cols ? { cls: 'cell--rhs' } : undefined;
+        },
+      }),
+      el('ul', { class: 'legend', role: 'list' }, [
+        el('li', { role: 'listitem' }, [
+          el('span', { class: 'swatch swatch--pivot', 'aria-hidden': 'true' }),
+          'pivot, also marked *',
+        ]),
       ]),
-    ]),
+    ),
     el('p', {
       class: 'field-label',
       text: `x — the ${system.a.cols} oil coordinates, one block per copy (the randomiser r picks which of the 16${superscript(system.a.cols - system.a.rows)} solutions we take)`,
@@ -305,6 +308,7 @@ function renderAssemble(target: HTMLElement, s: State): void {
     }),
     el('p', { class: 'field-label', text: 't — recomputed from the message and salt' }),
     vectorList(trace.t, { ariaLabel: 'target vector t' }),
+    compareLegend(),
     verdict(
       matches ? 'ok' : 'bad',
       matches ? 'P*(s) = t — the signature lands exactly on the target' : 'Mismatch — this would be a bug',

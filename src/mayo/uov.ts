@@ -60,6 +60,45 @@ export function signatureBytes(n: number, k: number, saltBytes: number): number 
   return Math.ceil((n * k) / 2) + saltBytes;
 }
 
+/**
+ * The smallest whipping factor that makes signing possible at all: the signer
+ * needs more unknowns than equations, so k·o > m.
+ *
+ * Every shipped MAYO parameter set uses exactly this k — the whipping is turned
+ * up just far enough to make the system solvable and not one copy further, since
+ * each extra copy costs n more field elements of signature. The test suite
+ * asserts that for MAYO1, MAYO2, MAYO3 and MAYO5.
+ */
+export function smallestSolvableK(m: number, o: number): number {
+  return Math.floor(m / o) + 1;
+}
+
+export interface WhipBalance {
+  k: number;
+  /** Unknowns available to the signer. */
+  unknowns: number;
+  /** Equations that must be satisfied. */
+  equations: number;
+  /** Positive once there is room to solve; k·o − m. */
+  slack: number;
+  solvable: boolean;
+  /** Signature cost at this k, in bytes. */
+  signatureBytes: number;
+}
+
+/** The equations-versus-unknowns balance at a given whipping factor. */
+export function whipBalance(m: number, o: number, n: number, k: number, saltBytes: number): WhipBalance {
+  const unknowns = k * o;
+  return {
+    k,
+    unknowns,
+    equations: m,
+    slack: unknowns - m,
+    solvable: unknowns > m,
+    signatureBytes: signatureBytes(n, k, saltBytes),
+  };
+}
+
 export function compareWithUov(p: MayoParams): UovComparison {
   const sz = sizes(p);
   const uovO = p.m; // one copy ⇒ the oil space must be big enough to invert

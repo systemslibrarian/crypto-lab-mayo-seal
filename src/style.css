@@ -596,14 +596,18 @@ tbody tr:last-child td {
   border-radius: 3px;
 }
 
+/* The swatches carry the same border treatment as the cells they describe, so the
+   legend is readable without colour too. */
 .swatch--pivot {
   background-color: color-mix(in oklab, var(--accent) 26%, var(--bg-2));
 }
 .swatch--bad {
   background-color: color-mix(in oklab, var(--alarm) 26%, var(--bg-2));
+  border-bottom: 4px double var(--alarm);
 }
 .swatch--ok {
   background-color: color-mix(in oklab, var(--ok) 22%, var(--bg-2));
+  border-bottom: 1px solid var(--ok);
 }
 .swatch--oil {
   background-color: color-mix(in oklab, var(--accent) 10%, var(--bg-2));
@@ -631,20 +635,29 @@ tbody tr:last-child td {
   text-align: center;
 }
 
+/* Each state carries a border treatment as well as a colour, so the strips stay
+   readable in grayscale and for colour-blind readers (WCAG 1.4.1). */
 .vec li.is-oil {
   background-color: color-mix(in oklab, var(--accent) 18%, var(--bg-2));
   border-color: var(--accent);
+  border-style: dashed;
 }
 
+/* "Differs" is struck through as well as tinted — a grayscale review showed the
+   border weight alone was too subtle at this cell size. */
 .vec li.is-bad {
   background-color: color-mix(in oklab, var(--alarm) 24%, var(--bg-2));
   border-color: var(--alarm);
+  border-bottom: 4px double var(--alarm);
   font-weight: 700;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
 }
 
 .vec li.is-ok {
   background-color: color-mix(in oklab, var(--ok) 20%, var(--bg-2));
   border-color: var(--ok);
+  border-bottom: 1px solid var(--ok);
 }
 
 .bar {
@@ -738,6 +751,100 @@ tbody tr:last-child td {
   margin: 0.4rem 0 0;
   color: var(--text-dim);
   font-size: 0.95rem;
+}
+
+/* ---------- the whipping figure ---------- */
+
+.card--viz {
+  background-color: var(--bg-2);
+}
+
+.wv-figure {
+  margin-top: 0.9rem;
+}
+
+.wv-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.wv-label,
+.wv-threshold-label {
+  fill: var(--text-dim);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.wv-copy {
+  fill: color-mix(in oklab, var(--accent) 30%, var(--panel));
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.wv-copy-label {
+  fill: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+/* Fill pattern is not the only channel: the stroke style differs too, and the
+   verdict is also stated in words beside the figure. */
+.wv-assembled.is-ok {
+  fill: color-mix(in oklab, var(--ok) 26%, var(--panel));
+  stroke: var(--ok);
+  stroke-width: 2;
+}
+
+.wv-assembled.is-bad {
+  fill: color-mix(in oklab, var(--alarm) 22%, var(--panel));
+  stroke: var(--alarm);
+  stroke-width: 2;
+  stroke-dasharray: 7 4;
+}
+
+.wv-threshold {
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+}
+
+.wv-slack {
+  fill: var(--ok);
+}
+
+.wv-short {
+  fill: var(--alarm);
+}
+
+.wv-verdict {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.8rem 0 0;
+  font-weight: 600;
+}
+
+.wv-verdict__icon {
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+.wv-verdict.is-ok .wv-verdict__icon {
+  color: var(--ok);
+}
+
+.wv-verdict.is-bad .wv-verdict__icon {
+  color: var(--alarm);
+}
+
+input[type='range'] {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  accent-color: var(--accent);
+  background-color: transparent;
+  border: 0;
 }
 
 /* ---------- exhibit jump nav ---------- */

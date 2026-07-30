@@ -6,7 +6,7 @@
  */
 import { PARAM_SETS, sizes, type MayoParams, type ParamSetName } from '../mayo/params';
 import { keypair, sign, verify, type ExpandedPublicKey, type ExpandedSecretKey } from '../mayo/mayo';
-import { byId, clear, el, formatMs, hex, statList, vectorList, verdict } from './dom';
+import { byId, clear, compareLegend, el, formatMs, hex, statList, vectorList, verdict } from './dom';
 
 interface State {
   p: MayoParams;
@@ -90,6 +90,7 @@ export function initVerify(): void {
       }),
       el('p', { class: 'field-label', text: 't — computed from the message and the salt' }),
       vectorList(result.t, { ariaLabel: 'target vector t', maxItems: limit }),
+      compareLegend(),
       el('p', {
         class: 'note',
         text: result.ok

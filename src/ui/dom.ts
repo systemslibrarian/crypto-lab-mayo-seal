@@ -178,11 +178,21 @@ export function matrixTable(m: Mat, opts: MatrixOptions): HTMLElement {
 }
 
 export interface VectorOptions {
-  /** Marks entries as oil / ok / bad; the class is additive to the base cell. */
+  /**
+   * Marks entries as oil / ok / bad. The class carries a colour *and* a border
+   * style, and this function also drives the per-cell accessible name, so state
+   * is never colour-only (WCAG 1.4.1).
+   */
   cell?: (index: number, value: number) => string | undefined;
   ariaLabel: string;
   maxItems?: number;
 }
+
+const CELL_MEANING: Record<string, string> = {
+  'is-ok': 'matches',
+  'is-bad': 'differs',
+  'is-oil': 'oil coordinate',
+};
 
 /** Renders a GF(16) vector as a labelled list of nibbles. */
 export function vectorList(values: Uint8Array, opts: VectorOptions): HTMLElement {
@@ -190,12 +200,43 @@ export function vectorList(values: Uint8Array, opts: VectorOptions): HTMLElement
   const list = el('ul', { class: 'vec', role: 'list', 'aria-label': opts.ariaLabel });
   for (let i = 0; i < limit; i++) {
     const cls = opts.cell?.(i, values[i]);
-    list.append(el('li', { role: 'listitem', class: cls ?? '', text: nibble(values[i]) }));
+    const meaning = cls ? CELL_MEANING[cls] : undefined;
+    list.append(
+      el('li', {
+        role: 'listitem',
+        class: cls ?? '',
+        text: nibble(values[i]),
+        'aria-label': meaning ? `coordinate ${i}: ${nibble(values[i])}, ${meaning}` : undefined,
+        title: meaning ? `coordinate ${i} ${meaning}` : undefined,
+      }),
+    );
   }
   if (limit < values.length) {
     list.append(el('li', { role: 'listitem', text: `+${values.length - limit}` }));
   }
   return list;
+}
+
+/**
+ * The legend that makes a compare strip readable without colour: matched and
+ * differing cells also carry distinct border treatments.
+ */
+export function compareLegend(): HTMLElement {
+  return el('ul', { class: 'legend', role: 'list' }, [
+    el('li', { role: 'listitem' }, [el('span', { class: 'swatch swatch--ok', 'aria-hidden': 'true' }), 'matches (thin underline)']),
+    el('li', { role: 'listitem' }, [el('span', { class: 'swatch swatch--bad', 'aria-hidden': 'true' }), 'differs (struck through)']),
+  ]);
+}
+
+/**
+ * A collapsed disclosure for the deeper readout of an exhibit. The summary says
+ * what is inside so the default page stays short and an expert can go further
+ * without the beginner paying for it.
+ */
+export function disclosure(summaryText: string, ...children: Node[]): HTMLElement {
+  const details = el('details', {}, [el('summary', { text: summaryText })]);
+  for (const child of children) details.append(child);
+  return details;
 }
 
 export function statList(items: Array<{ label: string; value: string; title?: string }>): HTMLElement {

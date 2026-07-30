@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { MAYO1, MAYO2, MAYO3, MAYO5, sizes } from './params';
-import { compareWithUov, computeTradeoffs, publicKeyBytes, signatureBytes, sizeBreakdown } from './uov';
+import { MAYO1, MAYO2, MAYO3, MAYO5, sizes, TOY } from './params';
+import {
+  compareWithUov,
+  computeTradeoffs,
+  publicKeyBytes,
+  signatureBytes,
+  sizeBreakdown,
+  smallestSolvableK,
+  whipBalance,
+} from './uov';
 
 describe('size ledger', () => {
   it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: breakdown adds up to the real key sizes', (p) => {
@@ -43,6 +51,39 @@ describe('size ledger', () => {
 
   it('keeps every trade-off row solvable: k·o > m', () => {
     for (const row of computeTradeoffs()) expect(row.k * row.o).toBeGreaterThan(row.m);
+  });
+});
+
+describe('why k is what it is', () => {
+  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: k is exactly the smallest whipping factor that solves', (p) => {
+    // The headline claim behind Exhibit 2's slider: the whipping is turned up
+    // just far enough for k·o > m, and no further, because every extra copy adds
+    // n more field elements to the signature.
+    expect(smallestSolvableK(p.m, p.o)).toBe(p.k);
+  });
+
+  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: one copy fewer is unsolvable, one more is dearer', (p) => {
+    const below = whipBalance(p.m, p.o, p.n, p.k - 1, p.saltBytes);
+    const at = whipBalance(p.m, p.o, p.n, p.k, p.saltBytes);
+    const above = whipBalance(p.m, p.o, p.n, p.k + 1, p.saltBytes);
+    expect(below.solvable).toBe(false);
+    expect(below.slack).toBeLessThanOrEqual(0);
+    expect(at.solvable).toBe(true);
+    expect(above.solvable).toBe(true);
+    expect(above.signatureBytes).toBeGreaterThan(at.signatureBytes);
+  });
+
+  it('TOY: the same rule picks k = 3', () => {
+    expect(smallestSolvableK(TOY.m, TOY.o)).toBe(TOY.k);
+    expect(whipBalance(TOY.m, TOY.o, TOY.n, 1, TOY.saltBytes).slack).toBe(-3);
+    expect(whipBalance(TOY.m, TOY.o, TOY.n, 2, TOY.saltBytes).slack).toBe(0);
+    expect(whipBalance(TOY.m, TOY.o, TOY.n, 3, TOY.saltBytes).slack).toBe(3);
+  });
+
+  it('k·o = m exactly is not enough', () => {
+    // m equations in m unknowns is square: solvable only when the matrix happens
+    // to be invertible, which is not something a signer can rely on.
+    expect(whipBalance(6, 3, 9, 2, 8).solvable).toBe(false);
   });
 });
 

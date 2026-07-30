@@ -17,6 +17,9 @@ async function openEverything(page: Page): Promise<void> {
 }
 
 async function scan(page: Page, label: string): Promise<void> {
+  // Deep readouts live behind disclosures; open them all first, because an
+  // unscanned state is an ungated state.
+  await openEverything(page);
   const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   expect(
     violations.map((v) => ({

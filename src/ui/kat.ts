@@ -1,5 +1,5 @@
 /**
- * Exhibit 5 — replay a reference known-answer vector in the browser.
+ * Exhibit 6 — replay a reference known-answer vector in the browser.
  *
  * The KAT harness in the MAYO submission seeds NIST's AES-256-CTR-DRBG with the
  * 48-byte `seed` from the .rsp file, then draws seedsk for keygen and R for
@@ -10,7 +10,7 @@ import { MAYO1, MAYO2, MAYO3, MAYO5, sizes, type MayoParams } from '../mayo/para
 import { compactKeyGen, expandPK, expandSK, sign, verify } from '../mayo/mayo';
 import { NistCtrDrbg } from '../mayo/nist-drbg';
 import katVectors from '../mayo/kat-vectors.json';
-import { byId, clear, el, formatMs, hex, statList, verdict } from './dom';
+import { byId, clear, disclosure, el, formatMs, hex, statList, verdict } from './dom';
 
 type KatKey = keyof typeof katVectors;
 
@@ -124,7 +124,7 @@ function runVector(out: HTMLElement, key: KatKey, count: number): void {
     }
     list.append(card);
   }
-  out.append(list);
+  out.append(disclosure('Show the byte-for-byte comparison', list));
   out.append(
     el('p', {
       class: 'note',

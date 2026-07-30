@@ -1,13 +1,15 @@
-/** Exhibit 4 — the size ledger. Every figure is either computed or labelled as quoted. */
+/** Exhibit 5 — the size ledger. Every figure is either computed or labelled as quoted. */
 import { MAYO1, MAYO2, MAYO3, MAYO5, type MayoParams } from '../mayo/params';
 import { compareWithUov, computeTradeoffs } from '../mayo/uov';
-import { byId, el, formatBytes, scroller } from './dom';
+import { byId, disclosure, el, formatBytes, scroller } from './dom';
 
 const SETS: MayoParams[] = [MAYO1, MAYO2, MAYO3, MAYO5];
 
 export function initLedger(): void {
   byId('ledger-uov').append(renderUovTable());
-  byId('ledger-tradeoff').append(renderTradeoffTable(), renderTradeoffNote());
+  byId('ledger-tradeoff').append(
+    disclosure('Show all nine (o, k) splits, computed and quoted side by side', renderTradeoffTable(), renderTradeoffNote()),
+  );
 }
 
 function renderUovTable(): HTMLElement {
