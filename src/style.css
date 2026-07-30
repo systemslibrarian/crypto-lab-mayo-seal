@@ -65,6 +65,17 @@
   box-sizing: border-box;
 }
 
+/*
+ * The `hidden` attribute has to outrank layout. The UA rule behind it is only
+ * `[hidden] { display: none }`, so any component rule that sets display — and
+ * `.field` and `.controls` both do — silently wins and the element stays on
+ * screen while claiming to be hidden. That is worse than a layout bug: it is a
+ * control the page believes is gone and a screen reader still announces.
+ */
+[hidden] {
+  display: none !important;
+}
+
 html {
   /* Longhand, not the `background` shorthand — axe and WebKit miss the shorthand. */
   background-color: var(--bg);
@@ -941,6 +952,60 @@ tbody tr:last-child td {
 
 .causal strong {
   color: var(--text);
+}
+
+/*
+ * Problem -> Whip -> Solve -> Break, as a row that wraps to a column on narrow
+ * screens. Reached stages carry a tick and an accent edge; the sr-only suffix in
+ * each item says "done" or "not yet" outright, so the state is never only a tint.
+ */
+.journey {
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  counter-reset: journey;
+}
+
+.journey__stage {
+  flex: 1 1 8.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.45rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-bottom: 3px solid var(--border-strong);
+  border-radius: 10px;
+  background-color: var(--bg-2);
+}
+
+.journey__stage[data-state='done'] {
+  border-bottom-color: var(--ok);
+}
+
+.journey__tick {
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.journey__stage[data-state='done'] .journey__tick {
+  color: var(--ok);
+}
+
+.journey__label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.journey__hint {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 /*

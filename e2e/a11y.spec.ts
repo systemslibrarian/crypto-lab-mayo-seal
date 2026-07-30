@@ -57,6 +57,22 @@ async function drivePredictions(page: Page): Promise<void> {
   await expect(page.locator('#pr-salt .verdict')).toContainText('Correct');
 }
 
+/**
+ * The guided journey: one choice at the top, carried through sign, verify and
+ * tamper, with the progress indicator part way along rather than empty or full.
+ */
+async function driveJourney(page: Page): Promise<void> {
+  await page.selectOption('#lsn-params', 'TOY');
+  await page.fill('#lsn-msg', 'one message, all the way through');
+  await page.click('#whip-run');
+  await page.click('#vf-adopt');
+  await page.click('#vf-verify');
+  await expect(page.locator('#lsn-stages [data-state="done"]')).toHaveCount(4);
+  await page.click('#lsn-reset');
+  await expect(page.locator('#lsn-out .verdict')).toContainText('Journey reset');
+  await page.click('#vf-verify');
+}
+
 /** Exhibit 1, for every offered parameter set. */
 async function driveKeygen(page: Page): Promise<void> {
   for (const set of ['MAYO1', 'MAYO2', 'MAYO3', 'MAYO5', 'TOY']) {
@@ -72,6 +88,8 @@ async function driveKeygen(page: Page): Promise<void> {
  * for a reader, not for the gate.
  */
 async function driveWhip(page: Page): Promise<void> {
+  // The guided journey ran the walkthrough already, so start from a clean board.
+  await page.click('#whip-reset');
   await page.click('#whip-next');
   await expect(page.locator('#whip-beat-state-1')).toHaveText('Done');
   await page.click('#whip-run');
@@ -154,6 +172,11 @@ async function driveAll(page: Page): Promise<void> {
   await freeze(page);
   await drivePredictions(page);
   await scan(page, 'prediction checks answered', '#intro');
+  await driveJourney(page);
+  await scan(page, 'the guided journey, part way through', '#journey');
+  // The rest of the sweep drives each exhibit's own controls, which is what
+  // explore mode exists for. Guided mode has just been scanned above.
+  await page.click('#lsn-mode');
   await driveKeygen(page);
   await scan(page, 'after keygen', '#keygen');
   await driveWhip(page);

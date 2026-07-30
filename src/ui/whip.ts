@@ -36,6 +36,7 @@ import {
   vectorList,
   verdict,
 } from './dom';
+import { markStage } from './lesson';
 
 const TOTAL_STEPS = 5;
 
@@ -190,6 +191,8 @@ function renderBeat(beat: number, s: State): void {
   const target = byId(`whip-beat-body-${beat}`);
   target.replaceChildren();
   const p = s.p;
+  // The journey indicator is driven by beats that have actually been computed.
+  markStage((['problem', 'whip', 'solve'] as const)[beat - 1]);
 
   if (beat === 1) {
     const attempt = tryUnwhipped(p, s.keys.sk, s.result.trace.t, s.result.trace.vinegar[0]);

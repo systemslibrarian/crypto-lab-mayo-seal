@@ -290,6 +290,40 @@
         </p>
       </section>
 
+      <section class="section" id="journey" aria-labelledby="journey-h">
+        <p class="kicker">Your signature</p>
+        <h2 id="journey-h">One key, one message, followed all the way through</h2>
+        <p class="lede">
+          Pick a parameter set and a message once, here, and every exhibit below uses them. The key you generate is
+          the key that signs; the signature you watch being assembled is the one the verifier accepts and the one
+          you break. Nothing on this page is a re-enactment of something computed elsewhere.
+        </p>
+
+        <div class="controls" id="lsn-controls">
+          <div class="field">
+            <label for="lsn-params">Parameter set for the whole journey</label>
+            <select id="lsn-params">
+              <option value="TOY" selected>TOY — small enough that every number fits on screen</option>
+              <option value="MAYO1">MAYO1 — real, smallest public key</option>
+              <option value="MAYO2">MAYO2 — real, smallest signature</option>
+            </select>
+          </div>
+          <div class="field field--grow">
+            <label for="lsn-msg">Message for the whole journey</label>
+            <input id="lsn-msg" type="text" value="transfer 10 to alice" spellcheck="false" />
+          </div>
+        </div>
+
+        <ol class="journey" id="lsn-stages" aria-label="Progress through the journey"></ol>
+
+        <div class="btn-row">
+          <button class="btn btn--ghost" id="lsn-mode" type="button" aria-pressed="false">Explore independently</button>
+          <button class="btn btn--ghost" id="lsn-reset" type="button">Reset progress</button>
+        </div>
+        <p class="note" id="lsn-mode-note"></p>
+        <div id="lsn-out" role="status" aria-live="polite"></div>
+      </section>
+
       <section class="section" id="keygen" aria-labelledby="keygen-h">
         <p class="kicker">Exhibit 1</p>
         <h2 id="keygen-h">Keygen: a needle small enough to shrink the haystack</h2>

@@ -7,6 +7,7 @@
 import { PARAM_SETS, sizes, type MayoParams, type ParamSetName } from '../mayo/params';
 import { keypair, sign, verify, type ExpandedPublicKey, type ExpandedSecretKey } from '../mayo/mayo';
 import { byId, clear, compareLegend, el, formatMs, hex, statList, vectorList, verdict } from './dom';
+import { markStage } from './lesson';
 import { walkthroughArtifact } from './whip';
 
 interface State {
@@ -62,6 +63,12 @@ export function initVerify(): void {
     const started = performance.now();
     const result = verify(s.p, s.pk, new TextEncoder().encode(s.claimedMessage), s.sig);
     const verifyMs = performance.now() - started;
+
+    // Both journey stages are recorded from the real verifier's answer: accepting
+    // an untampered signature is "verify", and a rejection that follows an edit
+    // the reader made is "break". A rejection with no edits behind it is neither.
+    if (result.ok) markStage('verify');
+    else if (s.changes.length > 0) markStage('break');
 
     clear(out);
     const mismatches = countMismatches(result.y, result.t);

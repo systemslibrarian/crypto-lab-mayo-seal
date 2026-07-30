@@ -8,6 +8,7 @@ import { initLedger } from './ui/ledger';
 import { initKat } from './ui/kat';
 import { initPreconditions } from './ui/preconditions';
 import { initPredictions } from './ui/predict';
+import { initLesson } from './ui/lesson';
 
 initKeygen();
 initWhipViz();
@@ -18,3 +19,5 @@ initLedger();
 initKat();
 initPreconditions();
 initPredictions();
+// Last: this drives the controls every exhibit above has just wired up.
+initLesson();

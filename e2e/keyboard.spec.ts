@@ -58,7 +58,10 @@ test('every interactive control is reachable by Tab', async ({ page }) => {
 
 test('focus is always visible', async ({ page }) => {
   await page.goto('.');
-  const controls = ['#kg-run', '#kg-params', '#kg-seed', '#whip-next', '#vf-sign', '#fg-guess', '#wv-k', '#kat-run'];
+  // #kg-params belongs to the guided journey by default, so check the control
+  // that actually owns the parameter set on load, plus a per-exhibit one after
+  // explore mode hands them back.
+  const controls = ['#lsn-params', '#lsn-msg', '#kg-run', '#kg-seed', '#whip-next', '#vf-sign', '#fg-guess', '#wv-k', '#kat-run'];
   for (const selector of controls) {
     await page.focus(selector);
     const outline = await page.locator(selector).evaluate((el) => {
@@ -68,6 +71,15 @@ test('focus is always visible', async ({ page }) => {
     const visible = Number.parseFloat(outline.width) > 0 && outline.style !== 'none';
     expect(visible || outline.shadow !== 'none', `${selector} has no visible focus indicator`).toBe(true);
   }
+
+  await page.click('#lsn-mode');
+  await page.focus('#kg-params');
+  const outline = await page.locator('#kg-params').evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { width: s.outlineWidth, style: s.outlineStyle, shadow: s.boxShadow };
+  });
+  const visible = Number.parseFloat(outline.width) > 0 && outline.style !== 'none';
+  expect(visible || outline.shadow !== 'none', '#kg-params has no visible focus indicator').toBe(true);
 });
 
 test('the whipping figure is operable with the arrow keys and reports in text', async ({ page }) => {
