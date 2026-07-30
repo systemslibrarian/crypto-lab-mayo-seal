@@ -856,6 +856,52 @@ tbody tr:last-child td {
   color: var(--text);
 }
 
+/*
+ * The size trade, shown next to the slider that causes it. Two cells rather than
+ * a stat row: these are the two sides of one bargain, and the left/right split
+ * carries that. The win/cost accent is decoration only — each cell says which it
+ * is in words, so nothing here is conveyed by colour alone.
+ */
+.wv-trade {
+  margin-top: 1rem;
+}
+
+.wv-trade__lead {
+  margin: 0 0 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.wv-trade__cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.wv-trade__cell {
+  flex: 1 1 14rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 12px;
+  background-color: var(--bg-2);
+}
+
+.wv-trade__cell.is-win {
+  border-left-color: var(--ok);
+}
+
+.wv-trade__cell.is-cost {
+  border-left-color: var(--warn);
+}
+
+.wv-trade__note {
+  margin: 0.4rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
 .pow {
   white-space: nowrap;
 }

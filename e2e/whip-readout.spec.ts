@@ -50,6 +50,26 @@ test('the slider never offers a whipping factor MAYO cannot build', async ({ pag
   await expect(page.locator('#wv-k')).toHaveAttribute('max', '6');
 });
 
+test('the size trade shows both halves, and only the cost half moves with k', async ({ page }) => {
+  await page.goto('');
+  await page.locator('#wv-params').selectOption('MAYO1');
+  const trade = page.locator('#wv-trade');
+
+  // Classic UOV at m = 78 needs o = 78, which is what makes its key enormous.
+  await expect(trade).toContainText('1.4 KB');
+  await expect(trade).toContainText('85× smaller');
+  await expect(trade).toContainText('117 KB');
+
+  await setK(page, 10);
+  await expect(trade).toContainText('454 B');
+  await setK(page, 12);
+  // The signature grows by ceil(n/2) = 43 B per copy...
+  await expect(trade).toContainText('540 B');
+  // ...while the public key, set by o, does not move at all.
+  await expect(trade).toContainText('1.4 KB');
+  await expect(trade).toContainText('85× smaller');
+});
+
 test('MAYO1 explains the E-matrix ceiling when the slider reaches it', async ({ page }) => {
   await page.goto('');
   await page.locator('#wv-params').selectOption('MAYO1');

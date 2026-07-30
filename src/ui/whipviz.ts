@@ -15,8 +15,8 @@
  * and the SVG carries a live text description.
  */
 import { maxWhippingFactor, PARAM_SETS, type MayoParams, type ParamSetName } from '../mayo/params';
-import { smallestKWithRoom, whipBalance, type WhipBalance } from '../mayo/uov';
-import { byId, clear, el, power, subscript } from './dom';
+import { compareWithUov, smallestKWithRoom, whipBalance, type WhipBalance } from '../mayo/uov';
+import { byId, clear, el, formatBytes, power, subscript } from './dom';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -35,6 +35,7 @@ export function initWhipViz(): void {
   const kValue = byId('wv-k-value');
   const figure = byId('wv-figure');
   const readout = byId('wv-readout');
+  const trade = byId('wv-trade');
 
   const configure = (p: MayoParams): void => {
     // One copy short of having room, through two past the shipped choice — but
@@ -79,6 +80,9 @@ export function initWhipViz(): void {
               : `This works, but it is wasteful: ${p.name} ships k = ${smallest}, and each copy beyond it costs another ⌈n/2⌉ = ${Math.ceil(p.n / 2)} bytes of signature.`,
       }),
     );
+
+    clear(trade);
+    trade.append(renderTrade(p, k, balance));
   };
 
   select.addEventListener('change', () => {
@@ -93,6 +97,56 @@ export function initWhipViz(): void {
 
 function stat(label: string, value: string): HTMLElement {
   return el('div', { class: 'stat' }, [el('dt', { text: label }), el('dd', { text: value })]);
+}
+
+/** "84.6×" for small ratios, "85×" once the decimal stops carrying information. */
+function times(ratio: number): string {
+  return `${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}×`;
+}
+
+/**
+ * The two halves of the bargain, side by side at the first interaction.
+ *
+ * The slider alone only shows what k costs — the signature grows as you turn it.
+ * That is half a trade, and the wrong half to see first: it makes whipping look
+ * like a tax. The saving is on the other side of the page, in the ledger, and a
+ * reader who never scrolls that far never learns why MAYO pays it.
+ *
+ * The baseline is classic UOV reaching the same m, which forces o = m because a
+ * single copy has to supply every oil variable itself. Both numbers come from the
+ * same size formulas the ledger uses, so this is a computed comparison rather
+ * than a quoted one. Only the signature half moves with k; the public key is set
+ * by o, and saying so is the point.
+ */
+function renderTrade(p: MayoParams, k: number, balance: WhipBalance): HTMLElement {
+  const c = compareWithUov(p);
+  const perCopy = Math.ceil(p.n / 2);
+
+  return el('div', { class: 'wv-trade__inner' }, [
+    el('p', { class: 'wv-trade__lead', text: `What that buys, against classic UOV at the same m = ${p.m}:` }),
+    el('div', { class: 'wv-trade__cols' }, [
+      el('div', { class: 'wv-trade__cell is-win' }, [
+        el('p', { class: 'stat-label', text: 'public key' }),
+        el('p', { class: 'stat-value', text: formatBytes(c.mayo.pk) }),
+        el('p', {
+          class: 'wv-trade__note',
+          text:
+            `${times(c.pkRatio)} smaller than UOV's ${formatBytes(c.uov.pk)}, which needs o = m = ${p.m} ` +
+            `to sign with one copy. Set by o = ${p.o}: turning k does not move this number.`,
+        }),
+      ]),
+      el('div', { class: 'wv-trade__cell is-cost' }, [
+        el('p', { class: 'stat-label', text: 'signature' }),
+        el('p', { class: 'stat-value', text: formatBytes(balance.signatureBytes) }),
+        el('p', {
+          class: 'wv-trade__note',
+          text:
+            `${times(balance.signatureBytes / c.uov.sig)} UOV's ${formatBytes(c.uov.sig)}. ` +
+            `Set by k = ${k}: every extra copy adds ⌈n/2⌉ = ${perCopy} B.`,
+        }),
+      ]),
+    ]),
+  ]);
 }
 
 /**
