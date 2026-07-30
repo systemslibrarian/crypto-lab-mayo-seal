@@ -274,10 +274,10 @@
         <p class="kicker">Exhibit 2 — the headline mechanism</p>
         <h2 id="whip-h">Sign: watch the too-small oil space become solvable</h2>
         <p class="lede">
-          This is the whole idea, run step by step on the toy parameters so every number fits on screen. With one copy
-          of the map the signer faces m = 6 equations in only o = 3 unknowns and almost always fails. Whip k = 3
-          copies together and it is m = 6 equations in k·o = 9 unknowns — same equations, three times the room. Run it
-          and read the two systems side by side.
+          This is the whole idea, run step by step. With one copy of the map the signer faces m equations in only o
+          unknowns and almost always fails; whip k copies together and it is the same m equations in k·o unknowns.
+          Start on the toy parameters, where every number fits on screen, then run the identical walkthrough on real
+          MAYO1 or MAYO2 — the matrices are drawn as a corner there, but every number in them is the real one.
         </p>
 
         <div class="card card--viz">
@@ -308,6 +308,14 @@
         </div>
 
         <div class="controls">
+          <div class="field">
+            <label for="whip-params">Walkthrough parameter set</label>
+            <select id="whip-params">
+              <option value="TOY" selected>TOY — 6 equations, 3 unknowns per copy</option>
+              <option value="MAYO1">MAYO1 — 78 equations, 8 per copy, k = 10</option>
+              <option value="MAYO2">MAYO2 — 64 equations, 17 per copy, k = 4</option>
+            </select>
+          </div>
           <div class="field field--grow">
             <label for="whip-msg">Message to sign</label>
             <input id="whip-msg" type="text" value="MAYO is UOV made deployable" spellcheck="false" />

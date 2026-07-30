@@ -49,6 +49,14 @@ async function driveWhip(page: Page): Promise<void> {
   await openEverything(page);
 }
 
+/** Exhibit 2 again, at real parameters, where the matrices are drawn as a corner. */
+async function driveWhipRealParams(page: Page): Promise<void> {
+  await page.selectOption('#whip-params', 'MAYO1');
+  await page.click('#whip-run');
+  await expect(page.locator('#whip-state-5')).toHaveText('Done', { timeout: 30_000 });
+  await expect(page.locator('#whip-body-5 .verdict').first()).toContainText('P*(s) = t');
+}
+
 /** Exhibit 3, accepting path. */
 async function driveVerifyValid(page: Page): Promise<void> {
   await page.click('#vf-sign');
@@ -100,6 +108,8 @@ async function driveAll(page: Page): Promise<void> {
   await scan(page, 'after keygen');
   await driveWhip(page);
   await scan(page, 'after the whipping walkthrough');
+  await driveWhipRealParams(page);
+  await scan(page, 'the whipping walkthrough at real parameters');
   await driveVerifyValid(page);
   await scan(page, 'signature accepted');
   await driveVerifyRejected(page);

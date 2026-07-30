@@ -4,9 +4,13 @@
  * Everything shown here comes out of the real signing path: the trace returned
  * by MAYO.Sign, plus one extra call that attempts the *unwhipped* system so the
  * failure is demonstrated rather than described.
+ *
+ * The walkthrough runs on any of the offered parameter sets. At real parameters
+ * the matrices are drawn as a corner — the view is clipped, the computation is
+ * not, and matrixTable says so in its caption.
  */
 import { rank, type Mat } from '../mayo/gf16';
-import { TOY } from '../mayo/params';
+import { PARAM_SETS, sizes, TOY, type MayoParams, type ParamSetName } from '../mayo/params';
 import {
   assemblePublicMatrices,
   evalWhipped,
@@ -20,10 +24,26 @@ import {
 import { emulsifierMatrix, whipPairs } from '../mayo/whip';
 import { byId, compareLegend, disclosure, el, hex, matrixTable, superscript, tableFigure, vectorList, verdict } from './dom';
 
-const p = TOY;
 const TOTAL_STEPS = 5;
 
+/**
+ * How much of a matrix to draw. The toy set fits whole; the real sets are drawn
+ * as a corner, with matrixTable saying so in its caption. Truncating the *view*
+ * changes nothing about the computation — every number shown is the real one.
+ */
+const VIEW_LIMIT = { rows: 14, cols: 18 };
+
+function view(p: MayoParams): { maxRows?: number; maxCols?: number } {
+  return p === TOY ? {} : { maxRows: VIEW_LIMIT.rows, maxCols: VIEW_LIMIT.cols };
+}
+
+/** Vector strips: the toy set fits whole, real ones are clipped with a "+N" tail. */
+function vecLimit(p: MayoParams): number | undefined {
+  return p === TOY ? undefined : 32;
+}
+
 interface State {
+  p: MayoParams;
   message: string;
   keys: { sk: ExpandedSecretKey; pk: ExpandedPublicKey };
   seed: Uint8Array;
@@ -35,13 +55,16 @@ let state: State | null = null;
 
 export function initWhip(): void {
   const msgInput = byId<HTMLInputElement>('whip-msg');
+  const setSelect = byId<HTMLSelectElement>('whip-params');
   const next = byId<HTMLButtonElement>('whip-next');
 
   const ensure = (): State => {
-    if (state && state.message === msgInput.value) return state;
-    const seed = crypto.getRandomValues(new Uint8Array(p.saltBytes));
+    const p = PARAM_SETS[setSelect.value as ParamSetName];
+    if (state && state.message === msgInput.value && state.p === p) return state;
+    const seed = crypto.getRandomValues(new Uint8Array(sizes(p).skSeedBytes));
     const { sk, pk } = keypair(p, seed);
     state = {
+      p,
       message: msgInput.value,
       keys: { sk, pk },
       seed,
@@ -89,6 +112,9 @@ export function initWhip(): void {
   msgInput.addEventListener('input', () => {
     if (state && state.message !== msgInput.value) byId<HTMLButtonElement>('whip-reset').click();
   });
+  // A different parameter set is a different walkthrough: clear the steps so the
+  // panels can never show a mix of two runs.
+  setSelect.addEventListener('change', () => byId<HTMLButtonElement>('whip-reset').click());
 }
 
 function stepTarget(step: number): HTMLElement {
@@ -121,6 +147,7 @@ function renderStep(step: number, s: State): void {
 }
 
 function renderTarget(target: HTMLElement, s: State): void {
+  const p = s.p;
   const { digest, salt, t } = s.result.trace;
   target.append(
     el('p', { class: 'field-label', text: `SHAKE256(message, ${p.digestBytes}) — digest` }),
@@ -128,21 +155,23 @@ function renderTarget(target: HTMLElement, s: State): void {
     el('p', { class: 'field-label', text: `salt = SHAKE256(digest ‖ R ‖ seedsk, ${p.saltBytes})` }),
     el('pre', { class: 'hexblock', text: hex(salt) }),
     el('p', { class: 'field-label', text: `t = the m = ${p.m} field elements the signature must hit` }),
-    vectorList(t, { ariaLabel: 'target vector t' }),
+    vectorList(t, { ariaLabel: 'target vector t', maxItems: vecLimit(p) }),
   );
 }
 
 function renderUnwhipped(target: HTMLElement, s: State): void {
+  const p = s.p;
   const { t, vinegar } = s.result.trace;
   const attempt = tryUnwhipped(p, s.keys.sk, t, vinegar[0]);
 
   target.append(
     el('p', { class: 'field-label', text: `v₁ — the n − o = ${p.n - p.o} vinegar coordinates, drawn from SHAKE256` }),
-    vectorList(vinegar[0], { ariaLabel: 'vinegar vector v1' }),
+    vectorList(vinegar[0], { ariaLabel: 'vinegar vector v1', maxItems: vecLimit(p) }),
     matrixTable(attempt.a, {
       caption: `A₁ · x = y — ${attempt.a.rows} equations in ${attempt.a.cols} unknowns. Row j is v₁ᵀ·Lⱼ, and the unknowns are the o oil coordinates.`,
       ariaLabel: 'the unwhipped linear system',
       rhs: { label: 'y', values: attempt.y },
+      ...view(p),
     }),
   );
 
@@ -151,10 +180,11 @@ function renderUnwhipped(target: HTMLElement, s: State): void {
     const aCols = attempt.a.cols;
     target.append(
       matrixTable(attempt.echelon, {
-        caption:
-          'Echelon form of (A₁ | y). One row has run out of unknowns while its right-hand side is still non-zero — that row says 0 = something, so there is nothing to solve.',
+        caption: `Echelon form of (A₁ | y). Row ${row} has run out of unknowns while its right-hand side is still non-zero — it says 0 = something, so there is nothing to solve.`,
         ariaLabel: 'echelon form of the unwhipped system',
         colLabels: [...Array.from({ length: aCols }, (_, j) => String(j)), 'y'],
+        // Keep the contradiction row on screen: it is the whole point of the step.
+        maxRows: p === TOY ? undefined : Math.min(attempt.echelon.rows, row + 2),
         cell: (i, j) => {
           if (i !== row) return j === aCols ? { cls: 'cell--rhs' } : undefined;
           return j === aCols
@@ -165,21 +195,22 @@ function renderUnwhipped(target: HTMLElement, s: State): void {
       verdict(
         'warn',
         `No solution — row ${row} reads 0 = ${attempt.echelon.d[row * (attempt.a.cols + 1) + attempt.a.cols].toString(16)}`,
-        `${p.m} equations, ${p.o} unknowns. There are ${p.m - p.o} equations too many, so a random target is out of reach with probability about 1 − 16⁻³. Classic Oil-and-Vinegar avoids this by making o ≥ m — and pays for it in public key size.`,
+        `${p.m} equations, ${p.o} unknowns. There are ${p.m - p.o} equations too many, so a random target is out of reach with probability about 1 − 16${superscript(-(p.m - p.o))}. Classic Oil-and-Vinegar avoids this by making o ≥ m — and pays for it in public key size.`,
       ),
     );
   } else {
     target.append(
       verdict(
         'warn',
-        'This vinegar happened to work — that is the 1-in-4096 case',
-        'With m − o = 3 spare equations a random target is reachable about once in 16³ tries. Press Reset and change the message to see the usual outcome.',
+        `This vinegar happened to work — that is the 1-in-16${superscript(p.m - p.o)} case`,
+        `With m − o = ${p.m - p.o} spare equations a random target is reachable about once in 16${superscript(p.m - p.o)} tries. Press Reset and change the message to see the usual outcome.`,
       ),
     );
   }
 }
 
 function renderWhip(target: HTMLElement, s: State): void {
+  const p = s.p;
   const { vinegar } = s.result.trace;
   const pairs = whipPairs(p.k);
 
@@ -188,7 +219,7 @@ function renderWhip(target: HTMLElement, s: State): void {
   ]);
   vinegar.forEach((v, i) => {
     vinegarBlock.append(el('p', { class: 'bar-caption', text: `v${i + 1}` }));
-    vinegarBlock.append(vectorList(v, { ariaLabel: `vinegar vector v${i + 1}` }));
+    vinegarBlock.append(vectorList(v, { ariaLabel: `vinegar vector v${i + 1}`, maxItems: vecLimit(p) }));
   });
   target.append(vinegarBlock);
 
@@ -233,6 +264,7 @@ function renderWhip(target: HTMLElement, s: State): void {
     matrixTable(e1, {
       caption: `E¹ — multiplication by z in F16[z]/${p.fName}, written out as an ${p.m}×${p.m} matrix.`,
       ariaLabel: 'the emulsifier matrix E to the power 1',
+      ...view(p),
     }),
     el('p', { text: `rank(E¹) = ${rank(e1)} = m, so E¹ is invertible.` }),
   ]);
@@ -240,6 +272,7 @@ function renderWhip(target: HTMLElement, s: State): void {
 }
 
 function renderSolve(target: HTMLElement, s: State): void {
+  const p = s.p;
   const { system, echelon, x, attempts } = s.result.trace;
   const pivotCols = pivotColumns(echelon, system.a.cols);
 
@@ -249,6 +282,7 @@ function renderSolve(target: HTMLElement, s: State): void {
       ariaLabel: 'the whipped linear system',
       rhs: { label: 'y', values: system.y },
       colLabels: Array.from({ length: system.a.cols }, (_, j) => `${Math.floor(j / p.o) + 1}.${j % p.o}`),
+      ...view(p),
     }),
     disclosure(
       'Show the Gaussian elimination',
@@ -256,6 +290,7 @@ function renderSolve(target: HTMLElement, s: State): void {
         caption: 'Echelon form of (A | y) with leading ones. Every row found a pivot, so the system has solutions.',
         ariaLabel: 'echelon form of the whipped system',
         colLabels: [...Array.from({ length: system.a.cols }, (_, j) => String(j)), 'y'],
+        ...view(p),
         cell: (i, j) => {
           if (pivotCols[i] === j) return { cls: 'cell--pivot', marker: '*', title: 'pivot' };
           return j === system.a.cols ? { cls: 'cell--rhs' } : undefined;
@@ -272,7 +307,7 @@ function renderSolve(target: HTMLElement, s: State): void {
       class: 'field-label',
       text: `x — the ${system.a.cols} oil coordinates, one block per copy (the randomiser r picks which of the 16${superscript(system.a.cols - system.a.rows)} solutions we take)`,
     }),
-    vectorList(x, { ariaLabel: 'oil solution x', cell: () => 'is-oil' }),
+    vectorList(x, { ariaLabel: 'oil solution x', cell: () => 'is-oil', maxItems: vecLimit(p) }),
     verdict(
       'ok',
       `Solved on attempt ctr = ${s.result.trace.ctr}`,
@@ -284,19 +319,28 @@ function renderSolve(target: HTMLElement, s: State): void {
 }
 
 function renderAssemble(target: HTMLElement, s: State): void {
+  const p = s.p;
   const { trace, sig } = s.result;
   const pMats = assemblePublicMatrices(p, s.keys.pk);
   const y = evalWhipped(p, pMats, trace.s);
   const matches = y.every((value, i) => value === trace.t[i]);
 
-  for (let i = 0; i < p.k; i++) {
+  const blocksShown = p === TOY ? p.k : Math.min(p.k, 2);
+  for (let i = 0; i < blocksShown; i++) {
     const block = trace.s.subarray(i * p.n, (i + 1) * p.n);
     target.append(el('p', { class: 'bar-caption', text: `s${i + 1} = (v${i + 1} + O·x${i + 1} ‖ x${i + 1})` }));
     target.append(
       vectorList(block, {
         ariaLabel: `signature block s${i + 1}`,
         cell: (idx) => (idx >= p.n - p.o ? 'is-oil' : undefined),
+        maxItems: p === TOY ? undefined : 24,
       }),
+    );
+  }
+
+  if (blocksShown < p.k) {
+    target.append(
+      el('p', { class: 'bar-caption', text: `… and ${p.k - blocksShown} more blocks, built the same way.` }),
     );
   }
 
@@ -305,9 +349,10 @@ function renderAssemble(target: HTMLElement, s: State): void {
     vectorList(y, {
       ariaLabel: 'the whipped map evaluated on the signature',
       cell: (i, value) => (value === trace.t[i] ? 'is-ok' : 'is-bad'),
+      maxItems: vecLimit(p),
     }),
     el('p', { class: 'field-label', text: 't — recomputed from the message and salt' }),
-    vectorList(trace.t, { ariaLabel: 'target vector t' }),
+    vectorList(trace.t, { ariaLabel: 'target vector t', maxItems: vecLimit(p) }),
     compareLegend(),
     verdict(
       matches ? 'ok' : 'bad',

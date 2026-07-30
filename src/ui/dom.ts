@@ -47,11 +47,11 @@ export function hex(bytes: Uint8Array, maxBytes = Number.POSITIVE_INFINITY): str
 
 const SUPERSCRIPTS = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
 
-/** 12 → "¹²", so exponents read as exponents in plain text. */
+/** 12 → "¹²", −3 → "⁻³", so exponents read as exponents in plain text. */
 export function superscript(n: number): string {
   return String(n)
     .split('')
-    .map((d) => SUPERSCRIPTS[Number(d)] ?? d)
+    .map((d) => (d === '-' ? '⁻' : (SUPERSCRIPTS[Number(d)] ?? d)))
     .join('');
 }
 
