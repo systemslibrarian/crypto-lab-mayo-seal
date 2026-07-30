@@ -14,7 +14,7 @@
  * The picture is never the only channel — the same numbers are printed beside it
  * and the SVG carries a live text description.
  */
-import { PARAM_SETS, type MayoParams, type ParamSetName } from '../mayo/params';
+import { maxWhippingFactor, PARAM_SETS, type MayoParams, type ParamSetName } from '../mayo/params';
 import { smallestKWithRoom, whipBalance, type WhipBalance } from '../mayo/uov';
 import { byId, clear, el, power, subscript } from './dom';
 
@@ -37,8 +37,10 @@ export function initWhipViz(): void {
   const readout = byId('wv-readout');
 
   const configure = (p: MayoParams): void => {
-    // One copy short of having room, through two past the shipped choice.
-    const max = Math.max(p.k + 2, 4);
+    // One copy short of having room, through two past the shipped choice — but
+    // never past what the spec allows, or the slider would offer a configuration
+    // MAYO cannot build.
+    const max = Math.min(Math.max(p.k + 2, 4), maxWhippingFactor(p));
     slider.min = '1';
     slider.max = String(max);
     slider.value = String(p.k);
@@ -68,7 +70,9 @@ export function initWhipViz(): void {
       el('p', {
         class: 'note',
         text:
-          k === smallest
+          k === maxWhippingFactor(p) && k > smallest
+            ? `k = ${k} is as far as ${p.name} can go: whipping needs k(k+1)/2 = ${(k * (k + 1)) / 2} distinct E matrices, and only m = ${p.m} exist.`
+            : k === smallest
             ? `k = ${smallest} is the smallest whipping factor with k·o > m, and it is exactly the k that ${p.name} ships. Every extra copy would add n = ${p.n} more field elements to the signature for no extra room.`
             : k < smallest
               ? `${p.name} ships k = ${smallest}, the smallest k with k·o > m. Below that the signer is not blocked by a theorem — it is blocked by the odds.`
@@ -120,7 +124,7 @@ function renderBalanceVerdict(balance: WhipBalance): HTMLElement {
       document.createTextNode(
         `Exactly enough: ${balance.unknowns} unknowns for ${balance.equations} equations. A full-rank draw has one solution, but about one draw in `,
       ),
-      power(2, Math.round(balance.restartBits!)),
+      restartTerm(balance.restartBits!),
       document.createTextNode(' is rank-deficient and has to be retried. MAYO takes slack instead of balancing here.'),
     );
   } else {
@@ -128,11 +132,17 @@ function renderBalanceVerdict(balance: WhipBalance): HTMLElement {
       document.createTextNode(`Room to spare: ${balance.unknowns} unknowns for ${balance.equations} equations. A full-row-rank draw has `),
       power(16, balance.slack),
       document.createTextNode(' solutions to choose from; roughly one draw in '),
-      power(2, Math.round(balance.restartBits!)),
+      restartTerm(balance.restartBits!),
       document.createTextNode(' still comes out rank-deficient, and Sign re-draws the vinegar when it does.'),
     );
   }
   return line;
+}
+
+/** The retry figure, or an honest words-only fallback if it underflows. */
+function restartTerm(bits: number): Node {
+  if (!Number.isFinite(bits)) return document.createTextNode('a number too small for this page to print');
+  return power(2, Math.round(bits));
 }
 
 /**

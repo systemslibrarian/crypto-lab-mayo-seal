@@ -167,6 +167,23 @@ export const TOY: MayoParams = {
 export const PARAM_SETS = { TOY, MAYO1, MAYO2, MAYO3, MAYO5 } as const;
 export type ParamSetName = keyof typeof PARAM_SETS;
 
+/**
+ * The largest whipping factor a parameter set could actually use.
+ *
+ * Two spec constraints bind it, and the second is easy to forget when a slider
+ * invites you to turn k up: the whipping needs k(k+1)/2 distinct E matrices, and
+ * they are the first k(k+1)/2 powers of z in a degree-m field, so k(k+1)/2 ≤ m.
+ * The spec also requires k < n − o. For the toy set that caps k at 3 — the same k
+ * it ships — so any offer of k = 4 would be a configuration MAYO cannot build.
+ */
+export function maxWhippingFactor(p: MayoParams): number {
+  // Largest k with k(k+1)/2 ≤ m.
+  const fromEMatrices = Math.floor((-1 + Math.sqrt(1 + 8 * p.m)) / 2);
+  // And k < n − o.
+  const fromVinegar = p.n - p.o - 1;
+  return Math.max(1, Math.min(fromEMatrices, fromVinegar));
+}
+
 /** All sizes derived from (n, m, o, k) exactly as listed in spec §2.1.1. */
 export function sizes(p: MayoParams): MayoSizes {
   const v = p.n - p.o;

@@ -10,7 +10,7 @@ import {
   encodeVec,
   hexToBytes,
 } from './encode';
-import { MAYO1, MAYO2, MAYO3, MAYO5, sizes, TOY } from './params';
+import { MAYO1, MAYO2, MAYO3, MAYO5, maxWhippingFactor, sizes, TOY } from './params';
 
 describe('spec encodings (§2.1.4)', () => {
   it('packs two nibbles per byte, low nibble first', () => {
@@ -83,6 +83,23 @@ describe('derived sizes match spec Table 2.1', () => {
         expect(Number.isInteger(value), `${p.name}.${name} = ${value}`).toBe(true);
       }
     }
+  });
+
+  it('never offers a whipping factor the spec forbids', () => {
+    // The figure's slider used to run to k + 2 unconditionally, which for the toy
+    // set offered k = 4 and 5 — configurations MAYO cannot build, because whipping
+    // needs k(k+1)/2 distinct E matrices and only m of them exist.
+    for (const p of [TOY, MAYO1, MAYO2, MAYO3, MAYO5]) {
+      const max = maxWhippingFactor(p);
+      expect(max, `${p.name}: shipped k must be reachable`).toBeGreaterThanOrEqual(p.k);
+      expect((max * (max + 1)) / 2, `${p.name}: k(k+1)/2 <= m`).toBeLessThanOrEqual(p.m);
+      expect(max, `${p.name}: k < n - o`).toBeLessThan(p.n - p.o);
+      // And one more copy would break a constraint.
+      const over = max + 1;
+      expect((over * (over + 1)) / 2 > p.m || over >= p.n - p.o).toBe(true);
+    }
+    // Concretely, for the toy set that cap is the shipped k itself.
+    expect(maxWhippingFactor(TOY)).toBe(3);
   });
 
   it('satisfies the spec constraints on (n, m, o, k)', () => {

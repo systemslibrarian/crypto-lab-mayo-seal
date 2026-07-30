@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAYO2, sizes, TOY, type MayoParams } from './params';
+import { MAYO1, MAYO2, sizes, TOY, type MayoParams } from './params';
 import { compactKeyGen, expandPK, expandSK, sign, verify } from './mayo';
 import {
   guessByChance,
@@ -77,6 +77,29 @@ describe('signing with the wrong oil space', () => {
       expect(attempt.result.ok).toBe(false);
       expect(attempt.result.firstMismatch).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  it('MAYO1: the corrupted entry can land anywhere in O, not just the first 256', () => {
+    // Regression: the index came from a single random byte, so at MAYO1 — where O
+    // has 78 x 8 = 624 entries — only the first 256 could ever be touched.
+    const { keys, pk } = keysFor(MAYO1, 90);
+    const touched = new Set<number>();
+    for (let trial = 0; trial < 40; trial++) {
+      const attempt = signWithOilSpace(
+        MAYO1,
+        keys,
+        pk,
+        enc.encode('reach'),
+        'one-nibble',
+        seededRandom(3000 + trial * 17),
+      );
+      expect(attempt.changedEntries).toBe(1);
+      for (let i = 0; i < attempt.oil.d.length; i++) {
+        if (attempt.oil.d[i] !== keys.o.d[i]) touched.add(i);
+      }
+    }
+    expect(keys.o.d.length).toBe(624);
+    expect(Math.max(...touched), `only reached index ${Math.max(...touched)}`).toBeGreaterThan(256);
   });
 
   it('TOY: changing a single nibble of the oil space is already fatal', () => {

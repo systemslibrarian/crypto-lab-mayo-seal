@@ -179,9 +179,13 @@ function oilSpaceFor(real: Mat, mode: OilSpaceMode, random: RandomBytes): Mat {
   if (mode === 'random') {
     return mat(real.rows, real.cols, random(real.d.length).map((x) => x & 0xf));
   }
-  // one-nibble: change a single entry of O to a different value.
+  // one-nibble: change a single entry of O to a different value. The index needs
+  // more than one byte — O has (n − o)·o entries, 624 of them at MAYO1, so a
+  // single random byte could only ever reach the first 256.
   const d = real.d.slice();
-  const idx = random(2)[0] % d.length;
+  const bytes = random(4);
+  const draw = ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
+  const idx = draw % d.length;
   const delta = 1 + (random(1)[0] % 15);
   d[idx] = (d[idx] ^ delta) & 0xf;
   if (d[idx] === real.d[idx]) d[idx] ^= 1;

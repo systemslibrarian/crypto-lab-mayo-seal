@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { MAYO1, MAYO2, MAYO3, MAYO5, sizes, TOY } from './params';
+import { MAYO1, MAYO2, MAYO3, MAYO5, maxWhippingFactor, sizes, TOY } from './params';
 import {
   compareWithUov,
   fullRowRankProbability,
+  rankDeficientProbability,
   computeTradeoffs,
   publicKeyBytes,
   signatureBytes,
@@ -119,6 +120,57 @@ describe('why k is what it is', () => {
       expect(bits, `${p.name}: 2^-${bits.toFixed(1)}`).toBeGreaterThan(11.5);
       expect(bits, `${p.name}: 2^-${bits.toFixed(1)}`).toBeLessThan(20.5);
     }
+  });
+
+  it('keeps the retry figure finite where the naive 1 − product underflows', () => {
+    // Regression: computing 1 − ∏(1 − 16^(i−N)) in double precision rounds to
+    // exactly 0 once the slack is large, and the UI printed "2^Infinity" when the
+    // slider went two copies past MAYO2's shipped k.
+    for (const [m, n] of [
+      [64, 85],
+      [64, 102],
+      [6, 15],
+      [142, 168],
+    ]) {
+      const bits = restartProbabilityBits(m, n);
+      expect(Number.isFinite(bits), `m=${m} N=${n} gave ${bits}`).toBe(true);
+      expect(bits).toBeGreaterThan(0);
+    }
+    // The naive form is the thing that breaks, so check we are past it.
+    const naive = 1 - [...Array(64).keys()].reduce((p, i) => p * (1 - 16 ** (i - 85)), 1);
+    expect(naive).toBe(0);
+    expect(rankDeficientProbability(64, 85)).toBeGreaterThan(0);
+  });
+
+  it('every stop the slider can reach prints a real number', () => {
+    // whipviz falls back to words when the figure is not finite. That fallback is
+    // honest, but it should never actually fire: if it does, the exhibit is
+    // showing prose where it promised a number. Walk the slider's real range.
+    let worst = 0;
+    let worstAt = '';
+    for (const p of [TOY, MAYO1, MAYO2, MAYO3, MAYO5]) {
+      const max = Math.min(Math.max(p.k + 2, 4), maxWhippingFactor(p));
+      for (let k = 1; k <= max; k++) {
+        const b = whipBalance(p.m, p.o, p.n, k, 24);
+        if (b.status === 'short') {
+          expect(b.restartBits, `${p.name} k=${k} is short`).toBeNull();
+          continue;
+        }
+        expect(
+          Number.isFinite(b.restartBits!),
+          `${p.name} k=${k}: restartBits=${b.restartBits}`,
+        ).toBe(true);
+        if (b.restartBits! > worst) {
+          worst = b.restartBits!;
+          worstAt = `${p.name} k=${k}`;
+        }
+      }
+    }
+    // The largest figure any stop can reach, quoted in rankDeficientProbability's
+    // comment as the reason the fallback stays dormant.
+    expect(worstAt).toBe('MAYO2 k=6');
+    expect(worst).toBeGreaterThan(150);
+    expect(worst).toBeLessThan(160);
   });
 
   it('rank deficiency is impossible to rule out but easy to detect', () => {

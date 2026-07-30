@@ -77,25 +77,43 @@ export function smallestKWithRoom(m: number, o: number): number {
 }
 
 /**
- * Probability that a uniformly random m×N matrix over GF(16) has rank m,
- * ∏_{i<m} (1 − 16^(i−N)). Returns 0 when N < m, where full row rank is
+ * Probability that a uniformly random m×N matrix over GF(16) is *rank-deficient*,
+ * 1 − ∏_{i<m}(1 − 16^(i−N)). Returns 1 when N < m, where full row rank is
  * impossible.
+ *
+ * Computed through log1p/expm1 rather than as `1 − product`. With a large slack
+ * the product rounds to exactly 1.0 in double precision, and the naive form then
+ * reports a rank-deficiency probability of 0 — which turned into a literal
+ * "2^Infinity" in the UI when the slider was dragged two copies past MAYO2's
+ * shipped k. expm1 keeps its accuracy near zero, so the figure stays finite down
+ * to about 2⁻¹⁰⁷² — where the 16^(i−N) terms themselves fall off the bottom of
+ * the double range and the sum goes to exactly 0. No parameter set comes close:
+ * the largest figure any slider stop can reach is MAYO2 at k = 6, about 2⁻¹⁵⁶.
  *
  * MAYO's signing matrix A is not literally uniform — it is built from the secret
  * key and the vinegar draw — but this random-matrix model is the one the spec's
  * own parameter choice reasons with, and it reproduces the restart probability
  * the round-2 submission quotes.
  */
-export function fullRowRankProbability(m: number, n: number): number {
-  if (n < m) return 0;
-  let p = 1;
-  for (let i = 0; i < m; i++) p *= 1 - 16 ** (i - n);
-  return p;
+export function rankDeficientProbability(m: number, n: number): number {
+  if (n < m) return 1;
+  let logProduct = 0;
+  for (let i = 0; i < m; i++) logProduct += Math.log1p(-(16 ** (i - n)));
+  return -Math.expm1(logProduct);
 }
 
-/** −log₂ of the chance a draw comes out rank-deficient, so signing must retry. */
+/** Probability that such a matrix does have full row rank. */
+export function fullRowRankProbability(m: number, n: number): number {
+  if (n < m) return 0;
+  return 1 - rankDeficientProbability(m, n);
+}
+
+/**
+ * −log₂ of the chance a draw comes out rank-deficient, so signing must retry.
+ * Infinite only if the probability underflows even in log space.
+ */
 export function restartProbabilityBits(m: number, n: number): number {
-  const fail = 1 - fullRowRankProbability(m, n);
+  const fail = rankDeficientProbability(m, n);
   if (fail <= 0) return Number.POSITIVE_INFINITY;
   return -Math.log2(fail);
 }
