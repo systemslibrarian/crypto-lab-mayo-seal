@@ -154,14 +154,67 @@ describe('sign and verify', () => {
     expect(verify(p, pk, enc.encode('pay alice 20'), sig).ok).toBe(false);
   });
 
-  it.each([TOY, MAYO2])('$name: rejects any single-nibble edit of the signature', (p) => {
-    const { sk, pk } = keypair(p, seedFor(p, 45));
+  it('TOY: rejects every single-nibble edit of the signature, exhaustively', () => {
+    // This used to check five hand-picked bytes with one bit flipped, under a
+    // name that claimed "any". The toy signature is 22 bytes, so the whole space
+    // — every byte, both nibbles, all 15 non-zero deltas — is 660 verifies and
+    // runs in well under a second. Sampling here was buying nothing.
+    const { sk, pk } = keypair(TOY, seedFor(TOY, 45));
     const msg = enc.encode('tamper me');
-    const { sig } = sign(p, sk.esk, msg);
-    for (const idx of [0, 1, 7, sig.length - p.saltBytes - 1, sig.length - 1]) {
-      const bad = sig.slice();
-      bad[idx] ^= 0x01;
-      expect(verify(p, pk, msg, bad).ok, `byte ${idx}`).toBe(false);
+    const { sig } = sign(TOY, sk.esk, msg);
+    let checked = 0;
+    for (let idx = 0; idx < sig.length; idx++) {
+      for (let delta = 1; delta < 16; delta++) {
+        for (const shift of [0, 4]) {
+          const bad = sig.slice();
+          bad[idx] ^= delta << shift;
+          expect(verify(TOY, pk, msg, bad).ok, `byte ${idx}, nibble ${shift ? 'high' : 'low'}, delta ${delta}`).toBe(false);
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBe(sig.length * 15 * 2);
+  });
+
+  it('MAYO2: rejects a nibble edit at every byte position of the signature', () => {
+    // Exhaustive over all 15 deltas would be ~11s here, so this sweeps every
+    // position instead of every value — the positional coverage is the part the
+    // old five-byte sample was missing.
+    const { sk, pk } = keypair(MAYO2, seedFor(MAYO2, 45));
+    const msg = enc.encode('tamper me');
+    const { sig } = sign(MAYO2, sk.esk, msg);
+    for (let idx = 0; idx < sig.length; idx++) {
+      for (const shift of [0, 4]) {
+        const bad = sig.slice();
+        bad[idx] ^= 1 << shift;
+        expect(verify(MAYO2, pk, msg, bad).ok, `byte ${idx}, nibble ${shift ? 'high' : 'low'}`).toBe(false);
+      }
+    }
+  });
+
+  it('rejects a non-canonical encoding, and only the toy set can have one', () => {
+    // A signature is ceil(n*k/2) bytes. TOY's n*k = 27 is odd, so its last nibble
+    // is padding that DecodeVec never reads: without a canonical-encoding check
+    // this byte string decodes to the same s as the real signature and verifies.
+    // Two byte strings, one signature, no key required.
+    const { sk, pk } = keypair(TOY, seedFor(TOY, 45));
+    const msg = enc.encode('tamper me');
+    const { sig } = sign(TOY, sk.esk, msg);
+    const sBytes = Math.ceil((TOY.n * TOY.k) / 2);
+    expect((TOY.n * TOY.k) % 2, 'TOY must be the odd case this guards').toBe(1);
+    expect(sig[sBytes - 1] >> 4, 'a freshly signed pad nibble is zero').toBe(0);
+
+    const padded = sig.slice();
+    padded[sBytes - 1] ^= 0x10;
+    const result = verify(TOY, pk, msg, padded);
+    expect(result.nonCanonical).toBe(true);
+    expect(result.ok).toBe(false);
+    // The oil coordinates really are identical — it is only the encoding that differs.
+    expect(result.firstMismatch, 'P*(s) still lands on t; the encoding is the problem').toBe(-1);
+
+    // The shipped sets have an even n·k, so no padding nibble exists to abuse.
+    for (const p of [MAYO1, MAYO2, MAYO3, MAYO5]) {
+      expect((p.n * p.k) % 2, `${p.name}: n·k must be even`).toBe(0);
     }
   });
 

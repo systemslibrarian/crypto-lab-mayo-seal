@@ -441,6 +441,19 @@ export interface VerifyResult {
   salt: Uint8Array;
   /** Index of the first coordinate where y and t disagree, or −1. */
   firstMismatch: number;
+  /**
+   * True when the signature is the right length but not a canonical encoding:
+   * the trailing padding nibble carries something other than zero.
+   *
+   * A signature holds n·k field elements in ⌈n·k/2⌉ bytes, so when n·k is odd
+   * the final high nibble is padding. EncodeVec writes zero there and DecodeVec
+   * never reads it back, which means that without this check two *different*
+   * byte strings decode to the same s and both verify — signature malleability,
+   * for free, with no key involved. Only the toy set is affected: n·k is even
+   * for MAYO1, MAYO2, MAYO3 and MAYO5, so none of them has a padding nibble at
+   * all and the check cannot change their behaviour or their KAT conformance.
+   */
+  nonCanonical: boolean;
 }
 
 /** MAYO.Verify (Algorithm 8). Returns ok = true for spec result 0. */
@@ -468,7 +481,18 @@ export function verify(
       break;
     }
   }
-  return { ok: firstMismatch === -1, y, t, s, salt: salt.slice(), firstMismatch };
+  // Reject a non-canonical encoding rather than ignoring the spare nibble.
+  const nonCanonical = (p.n * p.k) % 2 === 1 && (sig[sBytes - 1] >> 4) !== 0;
+
+  return {
+    ok: firstMismatch === -1 && !nonCanonical,
+    y,
+    t,
+    s,
+    salt: salt.slice(),
+    firstMismatch,
+    nonCanonical,
+  };
 }
 
 /** Convenience: keygen → expand → sign → verify, in one call. */

@@ -75,10 +75,16 @@ export function initVerify(): void {
     out.append(
       verdict(
         result.ok ? 'ok' : 'bad',
-        result.ok ? 'VALID — P*(s) = t' : `REJECTED — P*(s) ≠ t, first difference at coordinate ${result.firstMismatch}`,
+        result.ok
+          ? 'VALID — P*(s) = t'
+          : result.nonCanonical
+            ? 'REJECTED — the signature is not a canonical encoding'
+            : `REJECTED — P*(s) ≠ t, first difference at coordinate ${result.firstMismatch}`,
         result.ok
           ? `All ${s.p.m} coordinates agree. Checked in ${formatMs(verifyMs)}.`
-          : `${mismatches} of ${s.p.m} coordinates differ. Checked in ${formatMs(verifyMs)}.`,
+          : result.nonCanonical
+            ? `${s.p.n}·${s.p.k} = ${s.p.n * s.p.k} field elements is an odd count, so the last nibble of s is padding and must be zero. This one is not. Without that check it would decode to the same s as the untouched signature and verify — two different byte strings for one signature.`
+            : `${mismatches} of ${s.p.m} coordinates differ. Checked in ${formatMs(verifyMs)}.`,
       ),
       renderStats(s),
     );
