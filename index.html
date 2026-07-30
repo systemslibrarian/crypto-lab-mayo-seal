@@ -229,7 +229,7 @@
             <li><a href="#verify">3 · Verify and tamper</a></li>
             <li><a href="#forge">4 · Try to forge one</a></li>
             <li><a href="#ledger">5 · UOV versus MAYO</a></li>
-            <li><a href="#real">6 · Reference vectors</a></li>
+            <li><a href="#real">6 · Reference vectors &amp; preconditions</a></li>
           </ol>
         </nav>
 
@@ -479,7 +479,7 @@
 
       <section class="section" id="real" aria-labelledby="real-h">
         <p class="kicker">Exhibit 6</p>
-        <h2 id="real-h">The real thing: reference vectors, replayed in your browser</h2>
+        <h2 id="real-h">The real thing: reference vectors and preconditions, checked here</h2>
         <p class="lede">
           The same code that drives the toy exhibits runs the shipped MAYO parameter sets. Pick a vector from the
           round-2 submission's KAT files: the page seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does,
@@ -495,6 +495,30 @@
         </div>
 
         <div id="kat-out" role="status" aria-live="polite"></div>
+
+        <h3>The preconditions, checked in your browser</h3>
+        <p class="lede">
+          MAYO only works if several structural facts hold: f(z) irreducible, f not dividing det Z, every non-trivial
+          combination of the E matrices at full rank, the public map vanishing on the oil space and the whipped map on
+          Oᵏ, and the sizes matching Table 2.1. The test suite asserts all of them in CI — but a page that merely
+          claims them is asking to be trusted, so here they are recomputed on demand.
+        </p>
+
+        <div class="controls">
+          <div class="field">
+            <label for="pc-params">Parameter set</label>
+            <select id="pc-params">
+              <option value="TOY">TOY</option>
+              <option value="MAYO1" selected>MAYO1</option>
+              <option value="MAYO2">MAYO2</option>
+              <option value="MAYO3">MAYO3</option>
+              <option value="MAYO5">MAYO5</option>
+            </select>
+          </div>
+          <button class="btn" id="pc-run" type="button">Check the preconditions</button>
+        </div>
+
+        <div id="pc-out" role="status" aria-live="polite"></div>
       </section>
 
       <section class="section" id="scope" aria-labelledby="scope-h">

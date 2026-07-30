@@ -102,6 +102,13 @@ async function driveKat(page: Page): Promise<void> {
   await expect(page.locator('#kat-out .verdict').first()).toContainText('reproduced byte for byte', { timeout: 30_000 });
 }
 
+/** Exhibit 6, second panel: recompute the structural preconditions. */
+async function drivePreconditions(page: Page): Promise<void> {
+  await page.selectOption('#pc-params', 'MAYO2');
+  await page.click('#pc-run');
+  await expect(page.locator('#pc-out .verdict').first()).toContainText('preconditions hold', { timeout: 30_000 });
+}
+
 async function driveAll(page: Page): Promise<void> {
   await freeze(page);
   await driveKeygen(page);
@@ -119,8 +126,9 @@ async function driveAll(page: Page): Promise<void> {
   await driveForge(page);
   await scan(page, 'forgery attempts and the malformed-input battery');
   await driveKat(page);
+  await drivePreconditions(page);
   await openEverything(page);
-  await scan(page, 'reference vector replayed');
+  await scan(page, 'reference vector replayed and preconditions rechecked');
 }
 
 test('no WCAG A/AA violations — dark theme', async ({ page }) => {

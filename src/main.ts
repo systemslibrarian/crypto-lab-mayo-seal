@@ -6,6 +6,7 @@ import { initVerify } from './ui/verify';
 import { initForge } from './ui/forge';
 import { initLedger } from './ui/ledger';
 import { initKat } from './ui/kat';
+import { initPreconditions } from './ui/preconditions';
 
 initKeygen();
 initWhipViz();
@@ -14,3 +15,4 @@ initVerify();
 initForge();
 initLedger();
 initKat();
+initPreconditions();
