@@ -16,11 +16,20 @@ async function openEverything(page: Page): Promise<void> {
   });
 }
 
-async function scan(page: Page, label: string): Promise<void> {
+/**
+ * Scans one state. `include` narrows the scan to the exhibit that just changed:
+ * re-scanning the whole page after every interaction re-checks thousands of
+ * already-cleared nodes, which on a CI runner pushed the sweep past its timeout.
+ * Every state is still scanned, and driveAll finishes with one full-page pass so
+ * landmarks, heading order and the shared chrome are covered too.
+ */
+async function scan(page: Page, label: string, include?: string): Promise<void> {
   // Deep readouts live behind disclosures; open them all first, because an
   // unscanned state is an ungated state.
   await openEverything(page);
-  const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  const builder = new AxeBuilder({ page }).withTags(TAGS);
+  if (include) builder.include(include);
+  const { violations } = await builder.analyze();
   expect(
     violations.map((v) => ({
       state: label,
@@ -112,23 +121,24 @@ async function drivePreconditions(page: Page): Promise<void> {
 async function driveAll(page: Page): Promise<void> {
   await freeze(page);
   await driveKeygen(page);
-  await scan(page, 'after keygen');
+  await scan(page, 'after keygen', '#keygen');
   await driveWhip(page);
-  await scan(page, 'after the whipping walkthrough');
+  await scan(page, 'after the whipping walkthrough', '#whip');
   await driveWhipRealParams(page);
-  await scan(page, 'the whipping walkthrough at real parameters');
+  await scan(page, 'the whipping walkthrough at real parameters', '#whip');
   await driveVerifyValid(page);
-  await scan(page, 'signature accepted');
+  await scan(page, 'signature accepted', '#verify');
   await driveVerifyRejected(page);
-  await scan(page, 'signature rejected');
+  await scan(page, 'signature rejected', '#verify');
   await driveVerifyRealParams(page);
-  await scan(page, 'real parameters accepted');
+  await scan(page, 'real parameters accepted', '#verify');
   await driveForge(page);
-  await scan(page, 'forgery attempts and the malformed-input battery');
+  await scan(page, 'forgery attempts and the malformed-input battery', '#forge');
   await driveKat(page);
   await drivePreconditions(page);
-  await openEverything(page);
-  await scan(page, 'reference vector replayed and preconditions rechecked');
+  await scan(page, 'reference vector replayed and preconditions rechecked', '#real');
+  // One whole-page pass with every exhibit in its final state.
+  await scan(page, 'the finished page, end to end');
 }
 
 test('no WCAG A/AA violations — dark theme', async ({ page }) => {
