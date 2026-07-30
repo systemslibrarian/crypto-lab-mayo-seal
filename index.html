@@ -202,6 +202,7 @@
             <li><strong>Whipping supplies enough variables.</strong> k copies turn o unknowns into k·o, while every copy keeps the same hidden oil space, so the trapdoor survives.</li>
             <li><strong>Both together let the signer solve.</strong> Linear <em>and</em> wide enough. Neither one is sufficient: a wide system with no trapdoor is still a hard multivariate problem.</li>
           </ol>
+            <div class="predict" id="pr-threshold"></div>
             <div class="controls">
               <div class="field">
                 <label for="wv-params">Parameter set</label>
@@ -330,6 +331,8 @@
           MAYO1 or MAYO2 — the matrices are drawn as a corner there, but every number in them is the real one.
         </p>
 
+        <div class="predict" id="pr-whip"></div>
+
         <div class="controls">
           <div class="field">
             <label for="whip-params">Walkthrough parameter set</label>
@@ -434,6 +437,8 @@
           </div>
           <button class="btn" id="vf-sign" type="button">Sign this message</button>
         </div>
+
+        <div class="predict" id="pr-salt"></div>
 
         <div class="btn-row">
           <button class="btn btn--ghost" id="vf-adopt" type="button" title="Pulls the key, message and signature from Exhibit 2 into this panel.">Use the signature from Exhibit 2</button>

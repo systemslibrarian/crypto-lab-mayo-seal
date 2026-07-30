@@ -7,6 +7,7 @@ import { initForge } from './ui/forge';
 import { initLedger } from './ui/ledger';
 import { initKat } from './ui/kat';
 import { initPreconditions } from './ui/preconditions';
+import { initPredictions } from './ui/predict';
 
 initKeygen();
 initWhipViz();
@@ -16,3 +17,4 @@ initForge();
 initLedger();
 initKat();
 initPreconditions();
+initPredictions();

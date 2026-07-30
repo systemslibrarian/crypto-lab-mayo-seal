@@ -857,6 +857,71 @@ tbody tr:last-child td {
 }
 
 /*
+ * Prediction checks. Deliberately quiet: a dashed rule and no fill, so it reads
+ * as an aside the reader may skip rather than a gate they must pass. The chosen
+ * option is marked by aria-pressed, and the styling hangs off that attribute so
+ * the visual state and the accessible state cannot drift apart.
+ */
+.predict {
+  margin: 1.25rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+}
+
+.predict__kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.predict__q {
+  margin: 0.35rem 0 0.7rem;
+  font-weight: 600;
+}
+
+.predict__opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.predict__opt {
+  flex: 1 1 12rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background-color: var(--bg-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.predict__opt:hover {
+  border-color: var(--accent);
+}
+
+.predict__opt[aria-pressed='true'] {
+  border-color: var(--accent);
+  border-width: 2px;
+  padding: calc(0.55rem - 1px) calc(0.8rem - 1px);
+  background-color: var(--accent-soft);
+}
+
+.predict__out:empty {
+  display: none;
+}
+
+.predict__out {
+  margin-top: 0.75rem;
+}
+
+/*
  * The size trade, shown next to the slider that causes it. Two cells rather than
  * a stat row: these are the two sides of one bargain, and the left/right split
  * carries that. The win/cost accent is decoration only — each cell says which it

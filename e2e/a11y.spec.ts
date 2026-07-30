@@ -40,6 +40,23 @@ async function scan(page: Page, label: string, include?: string): Promise<void> 
   ).toEqual([]);
 }
 
+/**
+ * The three prediction checks, left answered so every later scan sees a chosen
+ * option and a verdict rather than the untouched state. Both verdict kinds are
+ * covered, and the selected option carries an accent fill that only exists once
+ * something has been clicked.
+ */
+async function drivePredictions(page: Page): Promise<void> {
+  await page.click('#pr-threshold-0');
+  await expect(page.locator('#pr-threshold .verdict')).toContainText('Not quite');
+  await page.click('#pr-threshold-1');
+  await expect(page.locator('#pr-threshold .verdict')).toContainText('Correct');
+  await page.click('#pr-whip-0');
+  await expect(page.locator('#pr-whip .verdict')).toContainText('Not quite');
+  await page.click('#pr-salt-0');
+  await expect(page.locator('#pr-salt .verdict')).toContainText('Correct');
+}
+
 /** Exhibit 1, for every offered parameter set. */
 async function driveKeygen(page: Page): Promise<void> {
   for (const set of ['MAYO1', 'MAYO2', 'MAYO3', 'MAYO5', 'TOY']) {
@@ -128,6 +145,8 @@ async function drivePreconditions(page: Page): Promise<void> {
 
 async function driveAll(page: Page): Promise<void> {
   await freeze(page);
+  await drivePredictions(page);
+  await scan(page, 'prediction checks answered', '#intro');
   await driveKeygen(page);
   await scan(page, 'after keygen', '#keygen');
   await driveWhip(page);
