@@ -112,6 +112,6 @@ Measured in-page and reported by Exhibit 5. On a recent laptop, MAYO1 keygen is 
 
 ---
 
-*One of 120+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
+*One of 170+ browser demos in the [Crypto Lab](https://crypto-lab.systemslibrarian.dev/) suite.*
 
 *"So whether you eat or drink or whatever you do, do it all for the glory of God." — 1 Corinthians 10:31*
