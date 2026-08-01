@@ -8,3 +8,7 @@ playwright-report/
 # Local build inputs, not part of the demo (the fleet keeps these out of the lab repos).
 CRYPTO-LAB-TEMPLATE*.md
 brief.txt
+
+# Review notes kept locally, not part of the shipped demo
+chat*.md
+gem.md
