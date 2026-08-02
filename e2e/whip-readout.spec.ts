@@ -32,6 +32,18 @@ test('the retry figure is always a number, never 2^Infinity', async ({ page }) =
   await expect(readout).toContainText('2 to the power 156');
 });
 
+test('a short system reports the positive denominator of its hit probability', async ({ page }) => {
+  await page.goto('');
+  await page.locator('#wv-params').selectOption('MAYO1');
+  await setK(page, 1);
+
+  const readout = page.locator('#wv-readout');
+  await expect(readout.locator('.wv-verdict .pow > [aria-hidden="true"]')).toHaveText('16⁷⁰');
+  await expect(readout).toContainText('draws — improbable, not impossible');
+  await expect(readout).toContainText('16 to the power 70');
+  await expect(readout).not.toContainText('16 to the power minus 70');
+});
+
 test('the slider never offers a whipping factor MAYO cannot build', async ({ page }) => {
   await page.goto('');
   await page.locator('#wv-params').selectOption('TOY');

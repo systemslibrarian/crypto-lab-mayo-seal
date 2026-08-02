@@ -77,8 +77,9 @@ export function checkPreconditions(p: MayoParams, seed: Uint8Array): Preconditio
       const count = (p.k * (p.k + 1)) / 2;
       const combo = mat(p.m, p.m);
       let tested = 0;
-      // Three pseudo-random non-trivial combinations, enough to be convincing in
-      // a page; the exhaustive argument is the field-theoretic one above.
+      // Three deterministic non-trivial spot checks. The exhaustive argument is
+      // the field-theoretic one above; these fixed coefficients keep the browser
+      // result reproducible and must not be described as random evidence.
       for (let trial = 1; trial <= 3; trial++) {
         combo.d.fill(0);
         for (let l = 0; l < count; l++) {
@@ -90,7 +91,7 @@ export function checkPreconditions(p: MayoParams, seed: Uint8Array): Preconditio
         if (rank(combo) !== p.m) return { holds: false, evidence: `A combination came out with rank < ${p.m}.` };
         tested++;
       }
-      return { holds: true, evidence: `${tested} random combinations of the ${count} E powers, each rank ${p.m}.` };
+      return { holds: true, evidence: `${tested} deterministic combinations of the ${count} E powers, each rank ${p.m}.` };
     }),
   });
 

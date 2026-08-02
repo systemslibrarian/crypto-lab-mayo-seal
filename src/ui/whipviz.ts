@@ -166,7 +166,7 @@ function renderBalanceVerdict(balance: WhipBalance): HTMLElement {
       document.createTextNode(
         `Usually out of reach: ${balance.unknowns} unknowns for ${balance.equations} equations. A random target is hit about once in `,
       ),
-      power(16, balance.slack),
+      power(16, -balance.slack),
       document.createTextNode(' draws — improbable, not impossible.'),
     );
   } else if (balance.status === 'exact') {

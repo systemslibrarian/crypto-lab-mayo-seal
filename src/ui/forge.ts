@@ -4,7 +4,7 @@
  * says why in terms the learner just watched happen.
  */
 import { PARAM_SETS, sizes, type MayoParams, type ParamSetName } from '../mayo/params';
-import { compactKeyGen, expandPK, expandSK, sign, type CompactKeys, type ExpandedPublicKey } from '../mayo/mayo';
+import { compactKeyGen, expandPK, expandSK, sign, verify, type CompactKeys, type ExpandedPublicKey } from '../mayo/mayo';
 import {
   guessByChance,
   MALFORMED_CASES,
@@ -222,6 +222,10 @@ function renderMalformed(s: Session): HTMLElement {
   const ctx = { p: s.p, sig: good, otherParams, otherMessage };
   const outcomes = MALFORMED_CASES.map((testCase) => runMalformedCase(ctx, s.pk, message, testCase));
   const allRejected = outcomes.every((o) => o.outcome !== 'accepted');
+  const refused = outcomes.filter((o) => o.outcome === 'refused').length;
+  const invalid = outcomes.filter((o) => o.outcome === 'invalid').length;
+  const goodValid = verify(s.p, s.pk, message, good).ok;
+  const batteryPassed = allRejected && goodValid;
 
   const list = el('ul', { class: 'checks', role: 'list' });
   for (const outcome of outcomes) {
@@ -241,12 +245,14 @@ function renderMalformed(s: Session): HTMLElement {
 
   return el('div', {}, [
     verdict(
-      allRejected ? 'ok' : 'bad',
-      allRejected
+      batteryPassed ? 'ok' : 'bad',
+      batteryPassed
         ? `All ${outcomes.length} malformed signatures were refused`
-        : 'A malformed signature was accepted — that is a bug',
-      allRejected
-        ? `Two are refused on shape before any field arithmetic runs, and two run the full comparison and fail it. The genuine signature for the same message still verifies, so nothing here weakened the good path.`
+        : allRejected
+          ? 'The malformed signatures were rejected, but the genuine control failed — that is a bug'
+          : 'A malformed signature was accepted — that is a bug',
+      batteryPassed
+        ? `${refused} ${refused === 1 ? 'is' : 'are'} refused on shape before any field arithmetic runs, and ${invalid} run the full comparison and fail it. The genuine signature for the same message was checked too and verified, so nothing here weakened the good path.`
         : 'Please report this.',
     ),
     list,
