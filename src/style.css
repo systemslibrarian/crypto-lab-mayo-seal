@@ -10,6 +10,7 @@
   --panel-2: #1d2612;
   --border: #33401f;
   --border-strong: #4a5c2c;
+  --control-border: #66803d; /* text-field/select boundary: >=3.5:1 on panels and field fill (SC 1.4.11) */
 
   --text: #f2f5e8;
   --text-dim: #c3cbaa;
@@ -42,6 +43,7 @@
   --panel-2: #f6f7ea;
   --border: #d3d8b8;
   --border-strong: #b3bb92;
+  --control-border: #7d865c; /* text-field/select boundary: >=3.4:1 on panels and field fill (SC 1.4.11) */
 
   --text: #1b1f10;
   --text-dim: #3f4626;
@@ -288,7 +290,7 @@ input[type='text'],
 textarea,
 select {
   padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   background-color: var(--bg-2);
   color: var(--text);
