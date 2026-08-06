@@ -12,7 +12,7 @@
     "test:a11y": "playwright test"
   },
   "dependencies": {
-    "@noble/ciphers": "^1.2.1",
+    "@noble/ciphers": "^2.2.0",
     "@noble/hashes": "^1.7.1"
   },
   "devDependencies": {
