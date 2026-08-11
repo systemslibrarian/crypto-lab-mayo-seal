@@ -336,10 +336,17 @@ select {
   filter: brightness(1.08);
 }
 
+/* --control-border, not --border-strong. A ghost button has NO fill at all, so
+   its border is the only thing that says a control is there — which is exactly
+   the case SC 1.4.11 is about, and exactly what --control-border was defined
+   for. --border-strong measured 2.33:1 against --panel in the dark theme and
+   2.01:1 in the light one; --control-border measures 3.82:1 and 3.89:1. The
+   token was already in the palette and already applied to every text field and
+   select; the buttons were simply not in the set it was applied to. */
 .btn--ghost {
   background-color: transparent;
   color: var(--text);
-  border-color: var(--border-strong);
+  border-color: var(--control-border);
 }
 
 .btn--danger {
@@ -567,6 +574,19 @@ tbody tr:last-child td {
 .matrix .cell--bad {
   background-color: color-mix(in oklab, var(--alarm) 26%, var(--bg-2));
   font-weight: 700;
+}
+
+/* --text-muted was chosen against the PAGE surfaces (--bg, --panel, --bg-2),
+   where it clears 4.5:1 comfortably. A zero inside a failing cell lands on a
+   surface those numbers do not describe: in the light theme the --alarm tint
+   composites to rgb(229, 190, 175) and the ink measured 3.95:1 there — the only
+   contrast failure left on this page in either theme. --text-dim measures
+   5.86:1 on the same surface. Scoped to `.cell--bad` deliberately: the same
+   oracle measured `.cell--ok` and `.cell--oilblock` in every state of the drive
+   and neither falls below 4.5:1, so neither is changed. `.cell--pivot` already
+   sets --text and outranks `.cell--zero` by source order. */
+.matrix .cell--zero.cell--bad {
+  color: var(--text-dim);
 }
 
 .matrix .cell--ok {
@@ -1041,10 +1061,13 @@ tbody tr:last-child td {
   gap: 0.5rem;
 }
 
+/* Same reason as .btn--ghost: --bg-2 on --panel-2 is a 1.1:1 fill, so the
+   border is the whole boundary. Measured 2.42:1 dark / 1.81:1 light on
+   --border-strong; 3.50:1 / 3.54:1 on --control-border. */
 .predict__opt {
   flex: 1 1 12rem;
   padding: 0.55rem 0.8rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   background-color: var(--bg-2);
   color: var(--text);
