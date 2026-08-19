@@ -16,7 +16,7 @@
     "@noble/hashes": "^1.7.1"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^22.20.1",
     "typescript": "~5.9.2",
