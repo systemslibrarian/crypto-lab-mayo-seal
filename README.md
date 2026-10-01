@@ -87,7 +87,7 @@ npm install
 npm run dev            # http://localhost:5173/crypto-lab-mayo-seal/
 npm test               # 142 unit tests, including 6 reference KAT vectors
 npm run build          # tsc --noEmit && vite build
-npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built site
+npm run test:a11y      # accessibility + browser claims against the built site
 ```
 
 ## Related Demos
@@ -106,13 +106,13 @@ The rest of the suite covers the field laws of GF(16), `Upper()` preserving the 
 
 Files worth reading: `src/mayo/gf16.ts` (the field), `src/ui/whipviz.ts` (the k-slider figure), `src/mayo/whip.ts` (the whipping construction and its structural checks), `src/mayo/linalg.ts` (Algorithms 1–2), `src/mayo/mayo.ts` (Algorithms 4–8), `src/mayo/forge.ts` (the failed attacks and the fail-closed cases), `src/mayo/preconditions.ts` (the structural checks), `src/mayo/uov.ts` (the size ledger), `src/mayo/kat-vectors.json` (the reference vectors). Places shaped for a likely extension are marked `// [extension] point`.
 
-**Accessibility gate:** `npm run test:a11y` runs eight accessibility Playwright tests plus two research-claim tests against the production build. The latter check claimed round-2 level labels, the dated preprint status, and the measured random-guess baseline.
+**Accessibility gate:** `npm run test:a11y` runs accessibility and interaction regressions, including two research-claim tests, against the production build. The latter check claimed round-2 level labels, the dated preprint status, and the measured random-guess baseline.
 
-Two are axe scans asserting zero WCAG 2.1 A/AA violations in **both** themes, across ten driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough at toy and at real parameters, on an accepted signature, on the walkthrough's own artifact adopted into the verifier, on each rejected one, under real parameters, after every forgery attempt and the malformed-input battery, after a reference-vector replay with the preconditions rechecked, and one whole-page pass with every exhibit in its final state), with every disclosure opened before each scan — an unscanned state is an ungated state.
+Two are axe scans asserting zero WCAG 2.1 A/AA violations in the shipped **dark** theme, at desktop and 380px widths, across the driven states (after keygen for all five offered parameter sets, after the whipping walkthrough at toy and at real parameters, on an accepted signature, on the walkthrough's own artifact adopted into the verifier, on each rejected one, under real parameters, after every forgery attempt and the malformed-input battery, after a reference-vector replay with the preconditions rechecked, and one whole-page pass with every exhibit in its final state), with every disclosure opened before each scan — an unscanned state is an ungated state.
 
 Each interaction scan is scoped to the exhibit that changed, with the final pass covering landmarks, heading order and the shared chrome. That is not only faster: re-scanning the whole page after every interaction re-checks thousands of already-cleared nodes, and it was what pushed the sweep past its timeout on a CI runner once the walkthrough started rendering real-parameter matrices.
 
-The other six cover what a static scan cannot: that the skip link is the first tab stop and reaches the content, that every id-bearing control is reachable by Tab, that focus is visibly indicated, that the k slider is arrow-key operable *and* reports its state in text and in the SVG's accessible name, that the whole demo can be driven keyboard-only, and that **no state is conveyed by colour alone** — every verdict carries a glyph and a worded headline, and every compare cell carries a border treatment plus an accessible name.
+The keyboard checks cover what a static scan cannot: that the skip link is the first tab stop and reaches the content, that every id-bearing control is reachable by Tab, that focus is visibly indicated, that the k slider is arrow-key operable *and* reports its state in text and in the SVG's accessible name, that the whole demo can be driven keyboard-only, and that **no state is conveyed by colour alone** — every verdict carries a glyph and a worded headline, and every compare cell carries a border treatment plus an accessible name.
 
 A manual review under grayscale and simulated deuteranopia/protanopia drove one fix: differing coordinates in the compare strips were distinguishable by tint and border weight but too subtly at that cell size, so they are now struck through as well. The GitHub Pages deploy is blocked if any of this fails.
 
