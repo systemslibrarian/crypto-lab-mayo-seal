@@ -342,10 +342,10 @@
             <label for="kg-params">Parameter set</label>
             <select id="kg-params">
               <option value="TOY" selected>TOY — n=9, m=6, o=3, k=3 (small enough to read)</option>
-              <option value="MAYO1">MAYO1 — n=86, m=78, o=8, k=10 (NIST level 1, small key)</option>
-              <option value="MAYO2">MAYO2 — n=81, m=64, o=17, k=4 (NIST level 1, small signature)</option>
-              <option value="MAYO3">MAYO3 — n=118, m=108, o=10, k=11 (NIST level 3)</option>
-              <option value="MAYO5">MAYO5 — n=154, m=142, o=12, k=12 (NIST level 5)</option>
+              <option value="MAYO1">MAYO1 — n=86, m=78, o=8, k=10 (round-2 claimed NIST level 1, small key)</option>
+              <option value="MAYO2">MAYO2 — n=81, m=64, o=17, k=4 (round-2 claimed NIST level 1, small signature)</option>
+              <option value="MAYO3">MAYO3 — n=118, m=108, o=10, k=11 (round-2 claimed NIST level 3)</option>
+              <option value="MAYO5">MAYO5 — n=154, m=142, o=12, k=12 (round-2 claimed NIST level 5)</option>
             </select>
           </div>
           <div class="field field--grow">
@@ -585,10 +585,17 @@
         </p>
         <div id="ledger-uov"></div>
 
-        <h3>The same security level, nine different (o, k) splits</h3>
+        <h3>The same claimed level, nine historical round-2 (o, k) splits</h3>
         <p class="lede">
-          Spec Table 2.2, NIST level 1. Reading down the table the oil space grows, k shrinks, the public key grows
+          Round-2 spec Table 2.2, claimed NIST level 1. This is a size comparison, not a security assessment. Reading down the table the oil space grows, k shrinks, the public key grows
           and the signature shrinks. The top row is MAYO1; the bottom row, k = 2, is nearly UOV.
+        </p>
+        <p class="lede" id="mayo-research-status">
+          <a href="https://eprint.iacr.org/2026/2247">Geometric Forgeries (September 30, 2026)</a>
+          estimates round-2 MAYO1 at 128 bits of work, below its 143-bit level-I comparator,
+          and MAYO3 at 207 bits. These are heuristic estimates in a preprint, not a practical
+          full-size forgery demonstration. This page retains historical round-2 parameters;
+          the levels above are submission claims. Round-3 revisions do not establish security here.
         </p>
         <div id="ledger-tradeoff"></div>
       </section>
@@ -707,8 +714,8 @@
             <p>
               Nothing about MAYO's security. Exhibit 4 lets you attempt a forgery and watch it fail, but that is a
               demonstration of the odds, not cryptanalysis: no key-recovery attack and no attack with any advantage
-              over guessing is implemented or claimed. The only way a signature verifies on this page is by being made
-              with the real oil space. The toy parameter set is breakable by hand and is labelled as such wherever it
+              over guessing is implemented here. The honest control uses the real oil space; a valid random guess could
+              also verify. These controls do not rule out structural forgeries. The toy parameter set is breakable by hand and is labelled as such wherever it
               appears.
             </p>
           </div>

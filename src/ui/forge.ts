@@ -94,14 +94,14 @@ function renderGuess(p: MayoParams, result: GuessResult): HTMLElement {
         ? 'A random guess verified — at these odds, please report it'
         : `0 forgeries in ${result.attempts.toLocaleString()} guesses — the best one matched ${result.bestMatch} of ${p.m} coordinates`,
       result.forged
-        ? 'This should take 16^m attempts on average; seeing it here means something is wrong.'
+        ? 'A valid random guess can verify, especially at toy scale. The 16^m average is a random-guess baseline, not a security bound.'
         : el('p', {}, [
             document.createTextNode('Each coordinate lands by luck one time in sixteen, so a full hit needs about '),
             power(16, p.m),
             document.createTextNode(' = '),
             power(2, result.expectedWorkBits),
             document.createTextNode(
-              ` guesses. Partial credit is worth nothing: the verifier compares all ${p.m} coordinates.`,
+              ` random guesses. This is not the best-known forgery cost. Partial credit is worth nothing: the verifier compares all ${p.m} coordinates.`,
             ),
           ]),
     ),
@@ -109,8 +109,8 @@ function renderGuess(p: MayoParams, result: GuessResult): HTMLElement {
       { label: 'guesses', value: result.attempts.toLocaleString() },
       { label: 'best match', value: `${result.bestMatch} / ${p.m}` },
       { label: 'guess rate', value: `${Math.round(perSecond).toLocaleString()} /s` },
-      { label: 'expected work', value: `2${superscript(result.expectedWorkBits)}` },
-      { label: 'time at this rate', value: estimateTime(result.expectedWorkBits, perSecond) },
+      { label: 'random-guess baseline', value: `2${superscript(result.expectedWorkBits)}` },
+      { label: 'random-guess time at this rate', value: estimateTime(result.expectedWorkBits, perSecond) },
       { label: 'elapsed', value: formatMs(result.elapsedMs) },
     ]),
   );

@@ -1,7 +1,7 @@
 /**
  * MAYO parameter sets — round-2 submission, Table 2.1 (pqmayo.org).
  *
- * MAYO1 and MAYO2 are the real NIST security level 1 sets and run unmodified in
+ * MAYO1 and MAYO2 are the round-2 submission's claimed NIST security level 1 sets and run unmodified in
  * this page. TOY is a deliberately tiny, non-secure set whose matrices fit on
  * screen; it exists so the whipping step can be *watched*, not asserted.
  */
@@ -29,7 +29,7 @@ export interface MayoParams {
   readonly f: Uint8Array;
   /** Human-readable name of f(z), e.g. "f78(z)". */
   readonly fName: string;
-  /** NIST security level, or null for the toy set. */
+  /** Round-2 submission's claimed/targeted NIST level, not established security; null for toy. */
   readonly securityLevel: number | null;
   /** Public-key / signature sizes quoted in Table 2.1, for cross-checking. */
   readonly quoted?: { pk: number; sig: number };

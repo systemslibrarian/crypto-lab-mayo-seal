@@ -18,9 +18,26 @@ MAYO shrinks **o** far below **m**, which breaks the shortcut, and then repairs 
 P*(x₁,…,x_k) = Σᵢ Eℓ·P(xᵢ) + Σᵢ<ⱼ Eℓ·P′(xᵢ,xⱼ)
 ```
 
-where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. `P*` still has **m** outputs but **k·n** inputs, and it still vanishes on `Oᵏ` — so the signer solves **m** equations in **k·o** unknowns, and parameters are chosen with `k·o > m`. MAYO1 reaches NIST level 1 with a **1420-byte** public key and a **454-byte** signature; MAYO2 trades the other way, **4912 bytes** of key for a **186-byte** signature.
+where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. `P*` still has **m** outputs but **k·n** inputs, and it still vanishes on `Oᵏ` — so the signer solves **m** equations in **k·o** unknowns, and parameters are chosen with `k·o > m`. The round-2 submission targets NIST level 1 for MAYO1, with a **1420-byte** public key and a **454-byte** signature; MAYO2 trades the other way, **4912 bytes** of key for a **186-byte** signature.
 
 **Security model:** EUF-CMA under the Oil-and-Vinegar assumption plus the hardness of solving generic multivariate quadratic systems. **This is not production crypto** — it is a teaching demo. The implementation is not constant-time and makes no side-channel claims.
+
+## Research status — round-2 parameters and heuristic forgery estimates
+
+[Ostuzzi, Geometric Forgeries: Structural Cryptanalysis of MAYO,
+ePrint 2026/2247](https://eprint.iacr.org/2026/2247), published September 30, 2026,
+combines structural and multi-target attacks. Table 1 estimates round-2 MAYO1 at
+128 bits of work and MAYO3 at 207; MAYO1 falls below the paper's 143-bit level-I
+comparator. These are **heuristic attack-cost estimates in a preprint**, not a
+practical full-size forgery demonstration or a final standards decision.
+
+This is distinct from the Schur–Macaulay analysis already cited below. The lab
+retains its round-2 parameters and reference vectors; its level labels describe
+the submission's **claimed/targeted** levels, not established security. Exhibit 4
+measures random guessing only: `16^m` is its baseline, not a lower bound on all
+attacks. Round 3 adds linear terms and changes parameters; the paper still
+estimates reductions for some round-3 sets. Neither this paper nor the lab
+establishes round-3 security.
 
 ## Exhibits
 
@@ -29,7 +46,7 @@ where the `E` matrices are multiplication by `z⁰, z¹, …` in `F16[z]/f(z)`. 
 
    Then the headline mechanism, stepped, on **any** of the offered parameter sets. Hash the message to a target `t`; fix the vinegar and try one unwhipped copy (at TOY: 6 equations in 3 unknowns, echelon form ending in a row that reads `0 = c`; at MAYO1: 78 in 8, same outcome); whip `k` copies, showing the spec's `Z` matrix of `z^ℓ` exponents; solve the same `m` equations in `k·o` unknowns; assemble `sᵢ = (vᵢ + O·xᵢ ‖ xᵢ)` and confirm `P*(s) = t`. At real parameters the matrices are drawn as a corner and the caption says which — the view is clipped, the computation is not, and the echelon view is anchored so the contradiction row stays on screen.
 3. **Verify: compute both sides, then try to fool it** — sign under any parameter set, then watch verification recompute `t` from the message and salt, evaluate `P*` on the signature, and print both vectors coordinate by coordinate. Three tamper buttons (flip a nibble in `s`, flip a bit in the salt, change the message under the signature) feed the *real* verifier and report which coordinate first disagrees.
-4. **Forge it without the trapdoor** — the break-it-yourself panel, where every button runs the real code and fails. Guess `s` and the salt at random and watch the match histogram come out binomial at one-in-sixteen per coordinate, with the measured guess rate extrapolated to the `16^m` a real forgery costs. Or keep the genuine key material and change only the oil space — at random, or by a single nibble: `Sign` still solves a full-rank system and still emits a correctly-sized signature, and `Verify` still rejects it, because `P⁽³⁾` was built from the real `O`. A control button runs the identical rebuilt-key path with the real `O` and verifies. A fourth button feeds the verifier four malformed signatures and reports which are refused on shape before any field arithmetic and which are rejected by the comparison.
+4. **Forge it without the trapdoor** — the break-it-yourself panel, where every button runs the real code and fails. Guess `s` and the salt at random and watch the match histogram come out binomial at one-in-sixteen per coordinate, with the measured guess rate extrapolated to the `16^m` random-guess baseline (not the best-known forgery cost). Or keep the genuine key material and change only the oil space — at random, or by a single nibble: `Sign` still solves a full-rank system and still emits a correctly-sized signature, and `Verify` still rejects it, because `P⁽³⁾` was built from the real `O`. A control button runs the identical rebuilt-key path with the real `O` and verifies. A fourth button feeds the verifier four malformed signatures and reports which are refused on shape before any field arithmetic and which are rejected by the comparison.
 5. **UOV versus MAYO, by the byte** — the `k = 1` corner of MAYO's own size formula (`o = m`) next to each shipped set, computed in the page rather than quoted; then the *historical round-2 submission's* Table 2.2 nine level-1 `(o, k)` splits, with every size recomputed and any disagreement with the printed table flagged. This compares sizes, not security: [Merz and Ran, ePrint 2026/2181 (September 26, 2026)](https://eprint.iacr.org/2026/2181) estimate that four *alternate* round-2 MAYO sets fall below their claimed security level. The preprint does not demonstrate key recovery against all MAYO parameters or establish the security of round-3 parameters.
 6. **The real thing: reference vectors and preconditions, checked here** — seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does, derives the keypair and the signature, and compares its own bytes against the reference hex for MAYO1, MAYO2, MAYO3 and MAYO5. A second panel recomputes the seven structural facts MAYO depends on — `f(z)` irreducible, `f ∤ det Z`, non-trivial `E` combinations at full rank, `P` vanishing on `O`, `P*` on `Oᵏ`, the sizes matching Table 2.1, and the ℓ numbering covering each pair once — each with what it computed, how long it took, and what breaks without it. The suite asserts all seven in CI; the panel exists because a page that only claims them is asking to be trusted.
 
@@ -61,14 +78,14 @@ Nor does width alone make a system easy. The figure spells out both causes: the 
 
 ## Real-World Usage
 
-MAYO is a NIST PQC additional-signatures on-ramp candidate [listed in round 3](https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures), submitted by Beullens, Campos, Celi, Hess and Kannwischer. This lab implements and checks the *round-2 submission* parameters and vectors, not the round-3 revision. Its pitch is certificate chains: at NIST level 1 a MAYO1 public key plus signature is under 2 KB combined, competitive with lattice signatures while resting on a different hardness assumption. The submission ships reference, AVX2, Arm NEON and Cortex-M4 implementations. It is **not** standardised, and no production protocol deploys it yet — the on-ramp exists to have alternatives ready if the lattice-based standards are weakened.
+MAYO is a NIST PQC additional-signatures on-ramp candidate [listed in round 3](https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures), submitted by Beullens, Campos, Celi, Hess and Kannwischer. This lab implements and checks the *round-2 submission* parameters and vectors, not the round-3 revision. Its pitch is certificate chains: for its claimed round-2 NIST level 1, a MAYO1 public key plus signature is under 2 KB combined, competitive with lattice signatures while resting on a different hardness assumption. The submission ships reference, AVX2, Arm NEON and Cortex-M4 implementations. It is **not** standardised, and no production protocol deploys it yet — the on-ramp exists to have alternatives ready if the lattice-based standards are weakened.
 
 ## How to Run Locally
 
 ```bash
 npm install
 npm run dev            # http://localhost:5173/crypto-lab-mayo-seal/
-npm test               # 136 unit tests, including 6 reference KAT vectors
+npm test               # 142 unit tests, including 6 reference KAT vectors
 npm run build          # tsc --noEmit && vite build
 npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built site
 ```
@@ -83,13 +100,13 @@ npm run test:a11y      # axe-core WCAG 2.1 A/AA gate, both themes, on the built 
 
 ## Build & Verify
 
-**136 unit tests** (Vitest, colocated as `src/**/*.test.ts`), of which **6 are reference known-answer tests** taken from the round-2 submission's `KAT/PQCsignKAT_*.rsp` files — two vectors each for MAYO1 and MAYO2, one each for MAYO3 and MAYO5. Each KAT seeds the NIST AES-256-CTR-DRBG from the vector's `seed`, derives `seedsk` and the signing randomizer `R` from it in the harness's order, and asserts that our secret key, public key and `signature ‖ message` match the reference hex **byte for byte**, then that our verifier accepts.
+**142 unit tests** (Vitest, colocated as `src/**/*.test.ts`), of which **6 are reference known-answer tests** taken from the round-2 submission's `KAT/PQCsignKAT_*.rsp` files — two vectors each for MAYO1 and MAYO2, one each for MAYO3 and MAYO5. Each KAT seeds the NIST AES-256-CTR-DRBG from the vector's `seed`, derives `seedsk` and the signing randomizer `R` from it in the harness's order, and asserts that our secret key, public key and `signature ‖ message` match the reference hex **byte for byte**, then that our verifier accepts.
 
 The rest of the suite covers the field laws of GF(16), `Upper()` preserving the quadratic form, encoder round-trips at every length, the derived-size formulas against spec Table 2.1, irreducibility of all five `f(z)` and the `f ∤ det Z` condition, full rank of the emulsifier combinations, echelon-form invariants, `SampleSolution` correctness and its rank-deficiency refusal, `P` vanishing on `O` and `P*` on `Oᵏ`, accept-good / reject-every-bad for signatures (modified message, single-nibble edits across `s` and the salt, cross-key, all-zero, wrong lengths), and the size-ledger claims.
 
 Files worth reading: `src/mayo/gf16.ts` (the field), `src/ui/whipviz.ts` (the k-slider figure), `src/mayo/whip.ts` (the whipping construction and its structural checks), `src/mayo/linalg.ts` (Algorithms 1–2), `src/mayo/mayo.ts` (Algorithms 4–8), `src/mayo/forge.ts` (the failed attacks and the fail-closed cases), `src/mayo/preconditions.ts` (the structural checks), `src/mayo/uov.ts` (the size ledger), `src/mayo/kat-vectors.json` (the reference vectors). Places shaped for a likely extension are marked `// [extension] point`.
 
-**Accessibility gate:** `npm run test:a11y` runs eight Playwright tests against the production build.
+**Accessibility gate:** `npm run test:a11y` runs eight accessibility Playwright tests plus two research-claim tests against the production build. The latter check claimed round-2 level labels, the dated preprint status, and the measured random-guess baseline.
 
 Two are axe scans asserting zero WCAG 2.1 A/AA violations in **both** themes, across ten driven states per theme (after keygen for all five offered parameter sets, after the whipping walkthrough at toy and at real parameters, on an accepted signature, on the walkthrough's own artifact adopted into the verifier, on each rejected one, under real parameters, after every forgery attempt and the malformed-input battery, after a reference-vector replay with the preconditions rechecked, and one whole-page pass with every exhibit in its final state), with every disclosure opened before each scan — an unscanned state is an ungated state.
 
@@ -107,7 +124,7 @@ Measured in-page and reported by Exhibit 5. On a recent laptop, MAYO1 keygen is 
 
 - **Real:** hand-rolled GF(16) and all MAYO-specific math; SHAKE256 and AES-128-CTR from [@noble](https://github.com/paulmillr/noble-hashes) (audited, synchronous — WebCrypto has no SHAKE and no synchronous AES). Real parameter sets, real reference vectors.
 - **Simulated:** nothing. The toy parameter set is a genuine, tiny instance of the same construction, labelled as insecure wherever it appears.
-- **Not proven:** anything about MAYO's security. Exhibit 4 attempts forgeries and they fail, but that demonstrates the odds rather than any cryptanalysis: no key-recovery attack, and nothing with an advantage over guessing, is implemented or claimed. The only way a signature verifies here is by being made with the real oil space. Side-channel and fault attacks are out of scope, as are the other on-ramp multivariate candidates (QR-UOV, SNOVA) and classic UOV's internals.
+- **Not proven:** anything about MAYO's security. Exhibit 4 attempts forgeries and they fail, but that demonstrates the odds rather than any cryptanalysis: no key-recovery attack, and nothing with an advantage over guessing, is implemented or claimed. The honest control signs with the real oil space; a valid random guess could also verify. These controls do not rule out structural forgeries. Side-channel and fault attacks are out of scope, as are the other on-ramp multivariate candidates (QR-UOV, SNOVA) and classic UOV's internals.
 - **No backend.** Everything runs in the browser; key material lives in memory for the length of a page view and is never persisted or transmitted.
 
 ---

@@ -82,7 +82,7 @@ function render(out: HTMLElement, p: MayoParams, seed: Uint8Array): void {
       `${p.name} keypair derived in ${formatMs(keygenMs)}`,
       p.securityLevel === null
         ? 'The same algorithm as the shipped sets, only with insecure dimensions — not a simulation. Small enough to read, and breakable by hand.'
-        : `NIST security level ${p.securityLevel} parameters, exactly as shipped in the round-2 submission.`,
+        : `Round-2 claimed NIST security level ${p.securityLevel} parameters, exactly as shipped in the round-2 submission.`,
     ),
   );
 

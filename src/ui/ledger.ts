@@ -38,7 +38,7 @@ function renderUovTable(): HTMLElement {
   for (const p of SETS) {
     const c = compareWithUov(p);
     const row = el('tr', {}, [
-      el('th', { scope: 'row', text: `${p.name} (level ${p.securityLevel})` }),
+      el('th', { scope: 'row', text: `${p.name} (round-2 claimed level ${p.securityLevel})` }),
       el('td', { class: 'numeric', text: `${p.n}, ${p.m}, ${p.o}, ${p.k}` }),
       el('td', { class: 'numeric', text: formatBytes(c.mayo.pk) }),
       el('td', { class: 'numeric', text: formatBytes(c.uov.pk) }),
@@ -53,7 +53,7 @@ function renderUovTable(): HTMLElement {
 
   const note = el('p', {
     class: 'note',
-    text: 'The unwhipped column is MAYO’s own size formula with o = m, not a quote from the UOV submission — it isolates the cost of the whipping and nothing else. The MAYO spec makes the same point for the (81, 64, 17, 4) set: about a 14-fold smaller public key than compressed Oil-and-Vinegar at the same security level, for roughly twice the signature.',
+    text: 'The unwhipped column is MAYO’s own size formula with o = m, not a quote from the UOV submission — it isolates the cost of the whipping and nothing else. The MAYO spec makes the same point for the (81, 64, 17, 4) set: about a 14-fold smaller public key than compressed Oil-and-Vinegar at the same claimed submission level, for roughly twice the signature.',
   });
   return el('div', {}, [scroller('MAYO versus the unwhipped map', table), note]);
 }
@@ -62,7 +62,7 @@ function renderTradeoffTable(): HTMLElement {
   const table = el('table');
   table.append(
     el('caption', {
-      text: 'NIST level 1, spec Table 2.2. "Computed" columns are recalculated in your browser from the size formulas; "in spec" columns are the printed values.',
+      text: 'Round-2 claimed NIST level 1, spec Table 2.2. This compares sizes, not security. "Computed" columns are recalculated in your browser from the size formulas; "in spec" columns are the printed values.',
     }),
   );
   const head = el('tr');

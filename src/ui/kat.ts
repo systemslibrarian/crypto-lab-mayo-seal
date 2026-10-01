@@ -30,7 +30,7 @@ export function initKat(): void {
       select.append(
         el('option', {
           value: `${key}:${vector.count}`,
-          text: `${PARAMS[key].name} — KAT count ${vector.count}, ${vector.mlen}-byte message (level ${PARAMS[key].securityLevel})`,
+          text: `${PARAMS[key].name} — KAT count ${vector.count}, ${vector.mlen}-byte message (round-2 claimed level ${PARAMS[key].securityLevel})`,
         }),
       );
     }
