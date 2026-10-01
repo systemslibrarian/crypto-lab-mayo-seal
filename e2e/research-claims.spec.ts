@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
 
-test('round-2 level labels and research status qualify the size comparison', async ({ page }) => {
+test.beforeEach(async ({ page }) => {
+  page.setDefaultTimeout(20_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('.');
+  await page.locator('#lsn-mode').click();
+  await expect(page.locator('#lsn-mode')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('round-2 level labels and research status qualify the size comparison', async ({ page }) => {
   for (const name of ['MAYO1', 'MAYO2', 'MAYO3', 'MAYO5']) {
     await expect(page.locator(`#kg-params option[value="${name}"]`)).toContainText('round-2 claimed NIST level');
   }
@@ -18,7 +25,6 @@ test('round-2 level labels and research status qualify the size comparison', asy
 });
 
 test('a measured guessing run reports a baseline rather than a security bound', async ({ page }) => {
-  await page.goto('.');
   await page.locator('#fg-params').selectOption('MAYO1');
   await page.locator('#fg-guess').click();
   await expect(page.locator('#fg-out')).toContainText('random-guess baseline');
