@@ -271,6 +271,26 @@ body {
   flex-direction: column;
   gap: 0.3rem;
   min-width: 0;
+  /* WebKit sizes a <select>'s intrinsic width from its WIDEST OPTION, and that
+     contribution reaches the document even when the control's own box fits and
+     `min-width: 0` is already set here. At 390px this page scrolled sideways by
+     139px in WebKit and 0 in Chromium. Eight selects carry parameter sets and the
+     longest option runs to 77 characters; hiding any ONE of them left the figure
+     at 139px and hiding all eight took it to 390 -- they all contribute, so the
+     fix belongs on the field rather than on one control.
+
+     `clip` rather than `hidden`, so this never becomes a scroll container. The
+     clip margin keeps the focus ring where it is supported; WebKit does not
+     support it, and WebKit is the engine that needs the clip, so the ring is also
+     pulled inside the control's own box below. */
+  overflow-x: clip;
+  overflow-clip-margin: 4px;
+}
+
+.field select:focus-visible {
+  /* Drawn just inside the border box, so no clip can reach it. The global
+     :focus-visible rule is 3px at offset 2px. */
+  outline-offset: -3px;
 }
 
 .field--grow {
