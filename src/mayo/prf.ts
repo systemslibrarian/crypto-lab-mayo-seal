@@ -8,8 +8,8 @@
  * no SHAKE at all. The multivariate math — the part this demo teaches — is
  * hand-rolled; these two are standard building blocks, so a library is right.
  */
-import { shake256 as nobleShake256 } from '@noble/hashes/sha3';
-import { ctr } from '@noble/ciphers/aes';
+import { shake256 as nobleShake256 } from '@noble/hashes/sha3.js';
+import { ctr } from '@noble/ciphers/aes.js';
 
 export function shake256(input: Uint8Array, outLen: number): Uint8Array {
   return nobleShake256(input, { dkLen: outLen });
