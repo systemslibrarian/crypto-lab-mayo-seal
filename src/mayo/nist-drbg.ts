@@ -6,7 +6,7 @@
  * DRBG from the 48-byte `seed` in the .rsp file, then MAYO's keypair() draws
  * seedsk from it and sign() draws the randomizer R from it.
  */
-import { ecb } from '@noble/ciphers/aes';
+import { ecb } from '@noble/ciphers/aes.js';
 
 export class NistCtrDrbg {
   private key = new Uint8Array(32);
