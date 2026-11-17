@@ -3,7 +3,11 @@
  *   - SHAKE256 for hashing and secret expansion,
  *   - AES-128-CTR for expanding the public seed into P(1), P(2).
  *
- * Both come from @noble (audited, dependency-free, synchronous). WebCrypto is
+ * Both come from @noble (dependency-free, synchronous). Pinned ^2.4.0, which is
+ * later than either library's audit — @noble/hashes records "at version 1.0.0,
+ * in Jan 2022, independently, by [Cure53]" and @noble/ciphers "at version 1.0.0,
+ * in Sep 2024, independently, by [cure53]". The reference vectors below are what
+ * this lab actually checks. WebCrypto is
  * not usable here: keygen needs AES output *synchronously*, and WebCrypto has
  * no SHAKE at all. The multivariate math — the part this demo teaches — is
  * hand-rolled; these two are standard building blocks, so a library is right.

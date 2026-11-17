@@ -126,7 +126,7 @@ Measured in-page and reported by Exhibit 5. On a recent laptop, MAYO1 keygen is 
 
 ## Honest Scoping
 
-- **Real:** hand-rolled GF(16) and all MAYO-specific math; SHAKE256 and AES-128-CTR from [@noble](https://github.com/paulmillr/noble-hashes) (audited, synchronous — WebCrypto has no SHAKE and no synchronous AES). Real parameter sets, real reference vectors.
+- **Real:** hand-rolled GF(16) and all MAYO-specific math; SHAKE256 and AES-128-CTR from [@noble](https://github.com/paulmillr/noble-hashes) (synchronous — WebCrypto has no SHAKE and no synchronous AES; both are pinned `^2.4.0`, later than either library's audit — hashes "at version 1.0.0, in Jan 2022, independently, by [Cure53]", ciphers "at version 1.0.0, in Sep 2024, independently, by [cure53]"). Real parameter sets, real reference vectors.
 - **Simulated:** nothing. The toy parameter set is a genuine, tiny instance of the same construction, labelled as insecure wherever it appears.
 - **Not proven:** anything about MAYO's security. Exhibit 4 attempts forgeries and they fail, but that demonstrates the odds rather than any cryptanalysis: no key-recovery attack, and nothing with an advantage over guessing, is implemented or claimed. The honest control signs with the real oil space; a valid random guess could also verify. These controls do not rule out structural forgeries. Side-channel and fault attacks are out of scope, as are the other on-ramp multivariate candidates (QR-UOV, SNOVA) and classic UOV's internals.
 - **No backend.** Everything runs in the browser; key material lives in memory for the length of a page view and is never persisted or transmitted.
