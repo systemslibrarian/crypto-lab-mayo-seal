@@ -58,11 +58,8 @@ describe('size ledger', () => {
 });
 
 describe('why k is what it is', () => {
-  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: k is exactly the smallest whipping factor with room to spare', (p) => {
-    // The headline claim behind Exhibit 2's slider: the whipping is turned up
-    // just far enough for k·o > m, and no further, because every extra copy adds
-    // n more field elements to the signature.
-    expect(smallestKWithRoom(p.m, p.o)).toBe(p.k);
+  it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: k is the smallest whipping factor with at least m unknowns', (p) => {
+    expect(p.k).toBe(Math.ceil(p.m / p.o));
   });
 
   it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: one copy fewer is short, one more is dearer', (p) => {
@@ -71,7 +68,7 @@ describe('why k is what it is', () => {
     const above = whipBalance(p.m, p.o, p.n, p.k + 1, p.saltBytes);
     expect(below.status).toBe('short');
     expect(below.slack).toBeLessThanOrEqual(0);
-    expect(at.status).toBe('slack');
+    expect(at.status).toBe(p === MAYO1 ? 'exact' : 'slack');
     expect(above.status).toBe('slack');
     expect(above.signatureBytes).toBeGreaterThan(at.signatureBytes);
   });
@@ -111,16 +108,10 @@ describe('why k is what it is', () => {
     }
   });
 
-  it('reproduces the restart probability the round-2 spec quotes', () => {
-    // The change log says the round-2 parameters raise the SampleSolution failure
-    // probability to between 2⁻¹² and 2⁻²⁰ so implementations can test the retry
-    // path. Our random-matrix model lands inside that window for all four sets.
-    for (const p of [MAYO1, MAYO2, MAYO3, MAYO5]) {
-      const bits = restartProbabilityBits(p.m, p.k * p.o);
-      expect(bits, `${p.name}: 2^-${bits.toFixed(1)}`).toBeGreaterThan(11.5);
-      expect(bits, `${p.name}: 2^-${bits.toFixed(1)}`).toBeLessThan(20.5);
-    }
-  });
+  it.each([[MAYO1, 3.91], [MAYO2, 7.91], [MAYO3, 11.91], [MAYO5, 11.91]] as const)(
+    '%s: models the round-3 restart probability from the shipped dimensions',
+    (p, bits) => expect(restartProbabilityBits(p.m, p.k * p.o)).toBeCloseTo(bits, 2),
+  );
 
   it('keeps the retry figure finite where the naive 1 − product underflows', () => {
     // Regression: computing 1 − ∏(1 − 16^(i−N)) in double precision rounds to
@@ -168,9 +159,9 @@ describe('why k is what it is', () => {
     }
     // The largest figure any stop can reach, quoted in rankDeficientProbability's
     // comment as the reason the fallback stays dormant.
-    expect(worstAt).toBe('MAYO2 k=6');
-    expect(worst).toBeGreaterThan(150);
-    expect(worst).toBeLessThan(160);
+    expect(worstAt).toBe('MAYO2 k=7');
+    expect(worst).toBeGreaterThan(110);
+    expect(worst).toBeLessThan(112);
   });
 
   it('rank deficiency is impossible to rule out but easy to detect', () => {
@@ -183,17 +174,12 @@ describe('why k is what it is', () => {
 });
 
 describe('MAYO versus the unwhipped map (k = 1)', () => {
-  it('MAYO2 shows roughly the 14× / 2× trade the spec claims', () => {
-    // Spec §1: versus compressed Oil-and-Vinegar at the same security level,
-    // (n,m,o,k) = (81,64,17,4) is "a 14-fold reduction in public key size at the
-    // cost of a 2-fold increase in signature size".
+  it('MAYO2 computes the round-3 size trade against the unwhipped model', () => {
     const c = compareWithUov(MAYO2);
-    expect(c.uov.o).toBe(MAYO2.m);
+    expect(c.uov.o).toBe(64);
     expect(c.uov.k).toBe(1);
-    expect(c.pkRatio).toBeGreaterThan(13);
-    expect(c.pkRatio).toBeLessThan(15);
-    expect(c.sigRatio).toBeGreaterThan(1.8);
-    expect(c.sigRatio).toBeLessThan(2.4);
+    expect(c.pkRatio).toBeCloseTo(66_576 / 2_928, 8);
+    expect(c.sigRatio).toBeCloseTo(239 / 88, 8);
   });
 
   it.each([MAYO1, MAYO2, MAYO3, MAYO5])('$name: dropping the whip costs at least 10× in key size', (p) => {
@@ -201,7 +187,7 @@ describe('MAYO versus the unwhipped map (k = 1)', () => {
   });
 
   it('agrees with the closed-form size helpers', () => {
-    expect(publicKeyBytes(78, 8)).toBe(sizes(MAYO1).cpkBytes);
-    expect(signatureBytes(86, 10, 24)).toBe(sizes(MAYO1).sigBytes);
+    expect(publicKeyBytes(80, 8)).toBe(sizes(MAYO1).cpkBytes);
+    expect(signatureBytes(88, 10, 24)).toBe(sizes(MAYO1).sigBytes);
   });
 });

@@ -73,6 +73,8 @@ export function initWhipViz(): void {
         text:
           k === maxWhippingFactor(p) && k > smallest
             ? `k = ${k} is as far as ${p.name} can go: whipping needs k(k+1)/2 = ${(k * (k + 1)) / 2} distinct E matrices, and only m = ${p.m} exist.`
+            : p.k < smallest
+              ? `${p.name} ships k = ${p.k}, where k·o = m. With k = ${smallest}, the system is wider and retries are less likely in the random-matrix model, at the cost of a longer signature.`
             : k === smallest
             ? `k = ${smallest} is the smallest whipping factor with k·o > m, and it is exactly the k that ${p.name} ships. Every extra copy would add n = ${p.n} more field elements to the signature for no extra room.`
             : k < smallest

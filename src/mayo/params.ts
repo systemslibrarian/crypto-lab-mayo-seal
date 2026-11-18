@@ -1,7 +1,7 @@
 /**
- * MAYO parameter sets — round-2 submission, Table 2.1 (pqmayo.org).
+ * MAYO parameter sets — round-3 submission, Table 2.1 (pqmayo.org).
  *
- * MAYO1 and MAYO2 are the round-2 submission's claimed NIST security level 1 sets and run unmodified in
+ * MAYO1 and MAYO2 are the round-3 submission's claimed NIST security level 1 sets and run unmodified in
  * this page. TOY is a deliberately tiny, non-secure set whose matrices fit on
  * screen; it exists so the whipping step can be *watched*, not asserted.
  */
@@ -10,6 +10,8 @@
 type PolyTerms = Record<number, number>;
 
 export interface MayoParams {
+  /** Round-3 exponent schedule. The toy retains its sequential schedule. */
+  schedule?: readonly (readonly number[])[];
   /** Machine name, also the label used in the UI. */
   readonly name: string;
   /** Number of variables in the public map P. */
@@ -27,7 +29,7 @@ export interface MayoParams {
   readonly pkSeedBytes: number;
   /** Coefficients of f(z), length m + 1, index = degree, f[m] = 1. */
   readonly f: Uint8Array;
-  /** Human-readable name of f(z), e.g. "f78(z)". */
+  /** Human-readable name of f(z), e.g. "f80(z)". */
   readonly fName: string;
   /** Round-2 submission's claimed/targeted NIST level, not established security; null for toy. */
   readonly securityLevel: number | null;
@@ -61,11 +63,11 @@ function poly(m: number, terms: PolyTerms): Uint8Array {
 
 // The four irreducible polynomials from spec §2.1.7.1. x = 2, x² = 4, x³ = 8.
 //   f64(z)  = z⁶⁴  + x³z³ + xz² + x³
-//   f78(z)  = z⁷⁸  + z² + z + x³
+//   f80(z)  = z⁸⁰ + xz³ + x²z² + x
 //   f108(z) = z¹⁰⁸ + (x²+x+1)z³ + z² + x³
 //   f142(z) = z¹⁴² + z³ + x³z² + x²
 const f64 = poly(64, { 3: 8, 2: 2, 0: 8 });
-const f78 = poly(78, { 2: 1, 1: 1, 0: 8 });
+const f80 = poly(80, { 3: 2, 2: 4, 0: 2 });
 const f108 = poly(108, { 3: 7, 2: 1, 0: 8 });
 const f142 = poly(142, { 3: 1, 2: 8, 0: 4 });
 
@@ -76,26 +78,45 @@ const f6 = poly(6, { 2: 9, 1: 1, 0: 1 });
 
 export const MAYO1: MayoParams = {
   name: 'MAYO1',
-  n: 86,
-  m: 78,
+  n: 88,
+  m: 80,
   o: 8,
   k: 10,
+  schedule: [
+    [10, 25, 7, 44, 40, 24, 12, 32, 5, 27],
+    [25, 6, 45, 50, 19, 0, 11, 14, 37, 52],
+    [7, 45, 51, 16, 42, 30, 53, 8, 21, 4],
+    [44, 50, 16, 15, 39, 26, 48, 54, 23, 34],
+    [40, 19, 42, 39, 22, 33, 1, 35, 41, 18],
+    [24, 0, 30, 26, 33, 13, 46, 17, 2, 47],
+    [12, 11, 53, 48, 1, 46, 36, 20, 49, 43],
+    [32, 14, 8, 54, 35, 17, 20, 38, 29, 9],
+    [5, 37, 21, 23, 41, 2, 49, 29, 3, 31],
+    [27, 52, 4, 34, 18, 47, 43, 9, 31, 28],
+  ],
   q: 16,
   saltBytes: 24,
   digestBytes: 32,
   pkSeedBytes: 16,
-  f: f78,
-  fName: 'f78(z)',
+  f: f80,
+  fName: 'f80(z)',
   securityLevel: 1,
-  quoted: { pk: 1420, sig: 454 },
+  quoted: { pk: 1456, sig: 464 },
 };
 
 export const MAYO2: MayoParams = {
   name: 'MAYO2',
-  n: 81,
+  n: 86,
   m: 64,
-  o: 17,
-  k: 4,
+  o: 13,
+  k: 5,
+  schedule: [
+    [11, 13, 3, 4, 6],
+    [13, 0, 14, 10, 2],
+    [3, 14, 8, 1, 5],
+    [4, 10, 1, 12, 9],
+    [6, 2, 5, 9, 7],
+  ],
   q: 16,
   saltBytes: 24,
   digestBytes: 32,
@@ -103,7 +124,7 @@ export const MAYO2: MayoParams = {
   f: f64,
   fName: 'f64(z)',
   securityLevel: 1,
-  quoted: { pk: 4912, sig: 186 },
+  quoted: { pk: 2928, sig: 239 },
 };
 
 export const MAYO3: MayoParams = {
@@ -112,6 +133,19 @@ export const MAYO3: MayoParams = {
   m: 108,
   o: 10,
   k: 11,
+  schedule: [
+    [35, 13, 39, 32, 4, 7, 40, 14, 43, 62, 64],
+    [13, 55, 42, 11, 63, 19, 58, 49, 36, 12, 20],
+    [39, 42, 6, 15, 57, 47, 16, 34, 44, 46, 50],
+    [32, 11, 15, 18, 5, 21, 28, 10, 51, 24, 31],
+    [4, 63, 57, 5, 38, 0, 56, 29, 54, 60, 23],
+    [7, 19, 47, 21, 0, 22, 27, 61, 3, 48, 8],
+    [40, 58, 16, 28, 56, 27, 37, 45, 30, 1, 17],
+    [14, 49, 34, 10, 29, 61, 45, 26, 52, 59, 41],
+    [43, 36, 44, 51, 54, 3, 30, 52, 25, 9, 2],
+    [62, 12, 46, 24, 60, 48, 1, 59, 9, 53, 65],
+    [64, 20, 50, 31, 23, 8, 17, 41, 2, 65, 33],
+  ],
   q: 16,
   saltBytes: 32,
   digestBytes: 48,
@@ -128,6 +162,20 @@ export const MAYO5: MayoParams = {
   m: 142,
   o: 12,
   k: 12,
+  schedule: [
+    [62, 30, 52, 53, 24, 0, 25, 12, 71, 20, 57, 32],
+    [30, 7, 37, 55, 43, 70, 31, 47, 35, 9, 69, 15],
+    [52, 37, 64, 26, 76, 45, 54, 10, 40, 34, 11, 19],
+    [53, 55, 26, 61, 16, 60, 5, 18, 42, 17, 8, 75],
+    [24, 43, 76, 16, 41, 27, 6, 2, 4, 51, 68, 38],
+    [0, 70, 45, 60, 27, 63, 22, 49, 23, 1, 21, 48],
+    [25, 31, 54, 5, 6, 22, 14, 29, 44, 65, 77, 72],
+    [12, 47, 10, 18, 2, 49, 29, 58, 67, 59, 39, 56],
+    [71, 35, 40, 42, 4, 23, 44, 67, 33, 73, 36, 74],
+    [20, 9, 34, 17, 51, 1, 65, 59, 73, 28, 46, 3],
+    [57, 69, 11, 8, 68, 21, 77, 39, 36, 46, 50, 13],
+    [32, 15, 19, 75, 38, 48, 72, 56, 74, 3, 13, 66],
+  ],
   q: 16,
   saltBytes: 40,
   digestBytes: 64,

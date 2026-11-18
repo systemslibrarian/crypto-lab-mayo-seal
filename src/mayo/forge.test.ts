@@ -81,7 +81,7 @@ describe('signing with the wrong oil space', () => {
 
   it('MAYO1: the corrupted entry can land anywhere in O, not just the first 256', () => {
     // Regression: the index came from a single random byte, so at MAYO1 — where O
-    // has 78 x 8 = 624 entries — only the first 256 could ever be touched.
+    // has 80 x 8 = 640 entries — only the first 256 could ever be touched.
     const { keys, pk } = keysFor(MAYO1, 90);
     const touched = new Set<number>();
     for (let trial = 0; trial < 40; trial++) {
@@ -98,7 +98,7 @@ describe('signing with the wrong oil space', () => {
         if (attempt.oil.d[i] !== keys.o.d[i]) touched.add(i);
       }
     }
-    expect(keys.o.d.length).toBe(624);
+    expect(keys.o.d.length).toBe(640);
     expect(Math.max(...touched), `only reached index ${Math.max(...touched)}`).toBeGreaterThan(256);
   });
 

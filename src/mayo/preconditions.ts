@@ -63,7 +63,7 @@ export function checkPreconditions(p: MayoParams, seed: Uint8Array): Preconditio
     matters:
       "The spec's second requirement on f. Equivalently the matrix of z^ℓ entries is invertible over F16[z]/f(z), which is what the whipping argument needs.",
     ...timed(() => ({
-      holds: detZNonzeroModF(p.f, p.k),
+      holds: detZNonzeroModF(p.f, p.k, p.schedule),
       evidence: `Gaussian elimination on Z over F16[z]/f(z) reached a non-zero determinant for all ${p.k} pivots.`,
     })),
   });
@@ -153,9 +153,10 @@ export function checkPreconditions(p: MayoParams, seed: Uint8Array): Preconditio
     matters:
       'Sign and Verify walk the pairs in the same order and must agree on which power of z belongs to which pair, or a signature will never verify.',
     ...timed(() => {
-      const pairs = whipPairs(p.k);
+      const pairs = whipPairs(p.k, p.schedule);
       const keysSeen = new Set(pairs.map(({ i, j }) => `${i}:${j}`));
-      const sequential = pairs.every((entry, idx) => entry.l === idx);
+      const exponents = [...new Set(pairs.map(({ l }) => l))].sort((a, b) => a - b);
+      const sequential = exponents.length === pairs.length && exponents.every((value, idx) => value === idx);
       return {
         holds: keysSeen.size === pairs.length && sequential && pairs.length === (p.k * (p.k + 1)) / 2,
         evidence: `${pairs.length} pairs, ℓ running 0…${pairs.length - 1} with no repeats.`,

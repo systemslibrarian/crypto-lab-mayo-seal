@@ -106,7 +106,7 @@ describe('derived sizes match spec Table 2.1', () => {
     for (const p of [TOY, MAYO1, MAYO2, MAYO3, MAYO5]) {
       expect(p.m % 2, `${p.name}: m must be even`).toBe(0);
       expect((p.k * (p.k + 1)) / 2, `${p.name}: k(k+1)/2 <= m`).toBeLessThanOrEqual(p.m);
-      expect(p.k * p.o, `${p.name}: ko > m`).toBeGreaterThan(p.m);
+      expect(p.k * p.o, `${p.name}: ko ≥ m`).toBeGreaterThanOrEqual(p.m);
       expect(p.k, `${p.name}: k < n - o`).toBeLessThan(p.n - p.o);
       expect(p.o, `${p.name}: o <= n - m`).toBeLessThanOrEqual(p.n - p.m);
       expect(p.f.length - 1, `${p.name}: deg f = m`).toBe(p.m);

@@ -88,12 +88,10 @@ export function smallestKWithRoom(m: number, o: number): number {
  * shipped k. expm1 keeps its accuracy near zero, so the figure stays finite down
  * to about 2⁻¹⁰⁷² — where the 16^(i−N) terms themselves fall off the bottom of
  * the double range and the sum goes to exactly 0. No parameter set comes close:
- * the largest figure any slider stop can reach is MAYO2 at k = 6, about 2⁻¹⁵⁶.
+ * the largest figure any slider stop can reach is MAYO2 at k = 7, about 2⁻¹¹².
  *
  * MAYO's signing matrix A is not literally uniform — it is built from the secret
- * key and the vinegar draw — but this random-matrix model is the one the spec's
- * own parameter choice reasons with, and it reproduces the restart probability
- * the round-2 submission quotes.
+ * key and the vinegar draw — so this random-matrix calculation is a model for the slider.
  */
 export function rankDeficientProbability(m: number, n: number): number {
   if (n < m) return 1;
@@ -195,12 +193,12 @@ export interface TradeoffRow {
   quotedPk: number;
   /** Signature size printed in the spec table. */
   quotedSig: number;
-  /** Whether this row is one of the four implemented sets. */
+  /** Whether this row was a main set in the historical round-2 submission. */
   main: boolean;
 }
 
 /**
- * Spec Table 2.2, the NIST level-1 block: the same security level reached with
+ * Historical round-2 spec Table 2.2, the NIST level-1 block: the same security level reached with
  * nine different (o, k) splits. Reading down the table, o grows, k shrinks, the
  * public key grows and the signature shrinks. The last row, k = 2, is nearly
  * classic UOV; the first, k = 10, is MAYO1.

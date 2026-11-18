@@ -5,7 +5,7 @@
  * decides an answer itself, it only displays the two vectors and their diff.
  */
 import { PARAM_SETS, sizes, type MayoParams, type ParamSetName } from '../mayo/params';
-import { keypair, sign, verify, type ExpandedPublicKey, type ExpandedSecretKey } from '../mayo/mayo';
+import { compactKeyGen, expandPK, signCompact, verify, type ExpandedPublicKey } from '../mayo/mayo';
 import { byId, clear, compareLegend, el, formatMs, hex, statList, vectorList, verdict } from './dom';
 import { markStage } from './lesson';
 import { walkthroughArtifact } from './whip';
@@ -13,7 +13,6 @@ import { walkthroughArtifact } from './whip';
 interface State {
   p: MayoParams;
   /** Null for a signature adopted from Exhibit 2 — verification needs no secret. */
-  sk: ExpandedSecretKey | null;
   pk: ExpandedPublicKey;
   /** The message the signature was made over. */
   signedMessage: string;
@@ -39,15 +38,18 @@ export function initVerify(): void {
     return state;
   };
 
+  out.before(el('p', { class: 'note', text: 'Round 3 adds a linear term to the whipped quadratic map to counter improved claw-finding attacks. The hash of the message digest and salt gives t and an AES-128 key and IV that expand into Λ. Verification adds Σᵢ Eᵢ₀Λsᵢ before comparing with t. The toy shows the quadratic map alone.' }));
+
   const doSign = (): void => {
     const p = PARAM_SETS[select.value as ParamSetName];
     const seed = crypto.getRandomValues(new Uint8Array(sizes(p).skSeedBytes));
-    const { sk, pk } = keypair(p, seed);
+    const keys = compactKeyGen(p, seed);
+    const pk = expandPK(p, keys.cpk);
     const message = msgInput.value;
     const started = performance.now();
-    const { sig } = sign(p, sk.esk, new TextEncoder().encode(message));
+    const { sig } = signCompact(p, keys.csk, new TextEncoder().encode(message));
     const signMs = performance.now() - started;
-    state = { p, sk, pk, signedMessage: message, claimedMessage: message, sig, changes: [] };
+    state = { p, pk, signedMessage: message, claimedMessage: message, sig, changes: [] };
     clear(out);
     out.append(
       verdict('ok', `Signed with a fresh ${p.name} key in ${formatMs(signMs)}`, `${sig.length}-byte signature. Now verify it, or break it.`),
@@ -76,10 +78,10 @@ export function initVerify(): void {
       verdict(
         result.ok ? 'ok' : 'bad',
         result.ok
-          ? 'VALID — P*(s) = t'
+          ? `VALID — ${s.p.schedule ? 'P*(s) + linear term' : 'P*(s)'} = t`
           : result.nonCanonical
             ? 'REJECTED — the signature is not a canonical encoding'
-            : `REJECTED — P*(s) ≠ t, first difference at coordinate ${result.firstMismatch}`,
+            : `REJECTED — public evaluation ≠ t, first difference at coordinate ${result.firstMismatch}`,
         result.ok
           ? `All ${s.p.m} coordinates agree. Checked in ${formatMs(verifyMs)}.`
           : result.nonCanonical
@@ -97,7 +99,7 @@ export function initVerify(): void {
 
     const limit = s.p.m > 80 ? 80 : s.p.m;
     out.append(
-      el('p', { class: 'field-label', text: 'P*(s) — computed from the signature and the public key' }),
+      el('p', { class: 'field-label', text: `${s.p.schedule ? 'P*(s) + linear term' : 'P*(s)'} — public evaluation` }),
       vectorList(result.y, {
         ariaLabel: 'the whipped map evaluated on the signature',
         maxItems: limit,
@@ -110,7 +112,7 @@ export function initVerify(): void {
         class: 'note',
         text: result.ok
           ? 'Both sides are shown so nothing has to be taken on trust: these are the two vectors MAYO.Verify compares.'
-          : 'A single changed nibble anywhere in s, in the salt, or in the message moves the whole target. There is no partial credit.',
+          : 'Editing s changes the public evaluation. Editing the message or salt changes the target and, in round 3, the linear map.',
       }),
     );
   };
@@ -159,7 +161,6 @@ export function initVerify(): void {
       p: artifact.p,
       // Verification never needs the secret key; this panel only holds one so it
       // can sign again on demand.
-      sk: null,
       pk: artifact.pk,
       signedMessage: artifact.message,
       claimedMessage: artifact.message,

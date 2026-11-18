@@ -24,13 +24,13 @@ describe('structural preconditions', () => {
 
   it('quotes the real table figures for a shipped set', () => {
     const sizesCheck = checkPreconditions(MAYO1, seedFor(MAYO1)).find((r) => r.id === 'sizes')!;
-    expect(sizesCheck.evidence).toContain('1420 B');
-    expect(sizesCheck.evidence).toContain('454 B');
+    expect(sizesCheck.evidence).toContain('1456 B');
+    expect(sizesCheck.evidence).toContain('464 B');
   });
 
   it('labels the reproducible E-power spot checks as deterministic', () => {
     const rankCheck = checkPreconditions(MAYO1, seedFor(MAYO1)).find((r) => r.id === 'erank')!;
-    expect(rankCheck.evidence).toBe('3 deterministic combinations of the 55 E powers, each rank 78.');
+    expect(rankCheck.evidence).toBe('3 deterministic combinations of the 55 E powers, each rank 80.');
     expect(rankCheck.evidence).not.toContain('random');
   });
 });

@@ -7,7 +7,7 @@
  */
 import { bytesToHex, concatBytes, hexToBytes } from '../mayo/encode';
 import { MAYO1, MAYO2, MAYO3, MAYO5, sizes, type MayoParams } from '../mayo/params';
-import { compactKeyGen, expandPK, expandSK, sign, verify } from '../mayo/mayo';
+import { compactKeyGen, expandPK, signCompact, verify } from '../mayo/mayo';
 import { NistCtrDrbg } from '../mayo/nist-drbg';
 import katVectors from '../mayo/kat-vectors.json';
 import { byId, clear, disclosure, el, formatMs, hex, statList, verdict } from './dom';
@@ -30,7 +30,7 @@ export function initKat(): void {
       select.append(
         el('option', {
           value: `${key}:${vector.count}`,
-          text: `${PARAMS[key].name} — KAT count ${vector.count}, ${vector.mlen}-byte message (round-2 claimed level ${PARAMS[key].securityLevel})`,
+          text: `${PARAMS[key].name} — KAT count ${vector.count}, ${vector.mlen}-byte message (round-3 claimed level ${PARAMS[key].securityLevel})`,
         }),
       );
     }
@@ -60,10 +60,9 @@ function runVector(out: HTMLElement, key: KatKey, count: number): void {
 
   const r = drbg.randomBytes(sz.rBytes);
   const message = hexToBytes(vector.msg);
-  const sk = expandSK(p, keys.csk);
 
   const signStart = performance.now();
-  const { sig } = sign(p, sk.esk, message, { r });
+  const { sig } = signCompact(p, keys.csk, message, { r });
   const signMs = performance.now() - signStart;
 
   const verifyStart = performance.now();
@@ -128,7 +127,7 @@ function runVector(out: HTMLElement, key: KatKey, count: number): void {
   out.append(
     el('p', {
       class: 'note',
-      text: `Vectors come from KAT/PQCsignKAT_${sz.skSeedBytes}_${key}.rsp in the MAYO round-2 submission. Only the first one or two counts are bundled here; the full files hold 100 each.`,
+      text: `Vectors come from KAT/PQCsignKAT_${sz.skSeedBytes}_${key}.rsp in the MAYO round-3 submission. Only the first one or two counts are bundled here; the submission contains the complete files.`,
     }),
   );
 }

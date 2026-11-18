@@ -361,7 +361,7 @@ export async function expectHiddenActuallyHides(page: Page): Promise<void> {
  *
  * WCAG 1.4.10 (Reflow, AA). axe has no rule for this at all, and this page is
  * the shape that breaks it: linear systems drawn one element per GF(16) nibble,
- * which at MAYO1 parameters are 78 rows by 80 columns, plus hex dumps of keys
+ * which at MAYO1 parameters are 80 rows by 80 columns, plus hex dumps of keys
  * and signatures that run to hundreds of characters with no spaces in them.
  * Every wide thing is meant to scroll inside a `.scroller` or wrap on
  * `overflow-wrap: anywhere`; the assertion here is that none of them scrolls
@@ -727,7 +727,7 @@ async function openAllDisclosures(page: Page, expectSome = true): Promise<void> 
  *    stay enabled afterwards, which is another rendering again.
  *
  *  - REAL PARAMETERS, NOT JUST TOY. At TOY the matrices fit on screen and
- *    nothing scrolls; at MAYO1 they are 78 rows tall, drawn as a corner, and
+ *    nothing scrolls; at MAYO1 they are 80 rows tall, drawn as a corner, and
  *    every `.scroller` on the page becomes a live WCAG 2.1.1 question. The
  *    whole 380px column exists mainly to ask it.
  *
@@ -778,7 +778,7 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   // is reachable here — and MAYO1 is the only route to a k range wider than
   // TOY's and to the real m and o on the figure.
   await page.selectOption('#wv-params', 'MAYO1');
-  await expect(page.locator('#wv-readout')).toContainText('78');
+  await expect(page.locator('#wv-readout')).toContainText('80');
   await scanAt('the whipping figure at MAYO1 parameters');
   const realMax = await kMax();
   await page.locator('#wv-k').fill(realMax);
@@ -880,8 +880,8 @@ export async function driveAllStates(page: Page, theme: string): Promise<void> {
   await page.selectOption('#whip-params', 'MAYO1');
   await page.click('#whip-run');
   await expect(page.locator('#whip-beat-state-3')).toHaveText('Done', SLOW);
-  await expect(page.locator('#whip-beat-body-3 .verdict').first()).toContainText('P*(s) = t');
-  await expect(page.locator('#whip-body-5 .verdict').first()).toContainText('P*(s) = t');
+  await expect(page.locator('#whip-beat-body-3 .verdict').first()).toContainText('P*(s) + linear term = t');
+  await expect(page.locator('#whip-body-5 .verdict').first()).toContainText('P*(s) + linear term = t');
   await scanAt('the whipping walkthrough at MAYO1, matrices drawn as a corner');
 
   // ── Exhibit 3: accept, adopt, and all three tampers ─────────────────────

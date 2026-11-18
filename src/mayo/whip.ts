@@ -59,11 +59,11 @@ export function emulsifierMatrix(f: Uint8Array, l: number): Mat {
  * from k−1 down to i. Also the numbering of the spec's Z(k×k) matrix, whose
  * entry [i][j] is z^ℓ(i,j).
  */
-export function whipPairs(k: number): Array<{ i: number; j: number; l: number }> {
+export function whipPairs(k: number, schedule?: readonly (readonly number[])[]): Array<{ i: number; j: number; l: number }> {
   const out: Array<{ i: number; j: number; l: number }> = [];
   let l = 0;
   for (let i = 0; i < k; i++) {
-    for (let j = k - 1; j >= i; j--) out.push({ i, j, l: l++ });
+    for (let j = k - 1; j >= i; j--) out.push({ i, j, l: schedule?.[i][j] ?? l++ });
   }
   return out;
 }
@@ -162,10 +162,10 @@ export function isIrreducible(f: Uint8Array): boolean {
  * over F16[z]/f(z), so we run Gaussian elimination there and report whether the
  * determinant came out nonzero.
  */
-export function detZNonzeroModF(f: Uint8Array, k: number): boolean {
+export function detZNonzeroModF(f: Uint8Array, k: number, schedule?: readonly (readonly number[])[]): boolean {
   const fp = Array.from(f);
   const z: number[][][] = Array.from({ length: k }, () => Array.from({ length: k }, () => [] as number[]));
-  for (const { i, j, l } of whipPairs(k)) {
+  for (const { i, j, l } of whipPairs(k, schedule)) {
     const zl = polyMod(
       Array.from({ length: l + 1 }, (_, idx) => (idx === l ? 1 : 0)),
       fp,

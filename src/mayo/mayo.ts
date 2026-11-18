@@ -19,7 +19,7 @@ import {
 } from './gf16';
 import { concatBytes, decodeMatrices, decodeO, decodeVec, encodeMatrices, encodeO, encodeVec } from './encode';
 import { sizes, type MayoParams } from './params';
-import { aes128ctr, shake256 } from './prf';
+import { aes128ctr, lambdaStream, shake256 } from './prf';
 import { sampleSolution, solveGeneral, type GeneralSolveResult } from './linalg';
 import { addMulZPowInto, mulZPow, whipPairs } from './whip';
 
@@ -197,7 +197,7 @@ export function evalWhipped(p: MayoParams, pMats: Mat[], s: Uint8Array): Uint8Ar
   }
 
   const u = new Uint8Array(p.m);
-  for (const { i, j, l } of whipPairs(p.k)) {
+  for (const { i, j, l } of whipPairs(p.k, p.schedule)) {
     for (let a = 0; a < p.m; a++) {
       let acc = 0;
       const si = sBlocks[i];
@@ -257,17 +257,48 @@ function buildVP1(p: MayoParams, p1: Mat[], vinegar: Uint8Array[]): Uint8Array[]
  */
 export function buildWhippedSystem(
   p: MayoParams,
-  sk: Pick<ExpandedSecretKey, 'p1' | 'l'>,
+  sk: Pick<ExpandedSecretKey, 'p1' | 'l'> | Pick<CompactKeys, 'p1' | 'p2' | 'o'>,
   t: Uint8Array,
   vinegar: Uint8Array[],
+  linear?: { lambda: Mat; o: Mat },
 ): WhippedSystem {
   const a = mat(p.m, p.k * p.o);
   const y = t.slice();
-  const mMats = buildMMats(p, sk.l, vinegar);
   const vP1 = buildVP1(p, sk.p1, vinegar);
+  const mMats = 'l' in sk ? buildMMats(p, sk.l, vinegar) : vinegar.map((vi, i) => {
+    const mi = mat(p.m, p.o);
+    for (let row = 0; row < p.m; row++) {
+      const cross = matVecMul(sk.p1[row], vi);
+      for (let col = 0; col < cross.length; col++) cross[col] ^= vP1[i][row][col];
+      const left = vecMatMul(cross, sk.o);
+      const right = vecMatMul(vi, sk.p2[row]);
+      for (let col = 0; col < p.o; col++) mi.d[row * p.o + col] = left[col] ^ right[col];
+    }
+    return mi;
+  });
   const u = new Uint8Array(p.m);
 
-  for (const { i, j, l } of whipPairs(p.k)) {
+  if (linear && p.schedule) {
+    const { lambda, o } = linear;
+    const width = p.n - p.o;
+    const lambdaV = mat(p.m, width);
+    for (let row = 0; row < p.m; row++) {
+      const start = row * p.n;
+      lambdaV.d.set(lambda.d.subarray(start, start + width), row * width);
+    }
+    const oil = matMul(lambdaV, o);
+    for (let row = 0; row < p.m; row++) {
+      for (let col = 0; col < p.o; col++) {
+        const index = row * p.o + col;
+        mMats[0].d[index] ^= oil.d[index] ^ lambda.d[row * p.n + width + col];
+      }
+    }
+    for (let i = 0; i < p.k; i++) {
+      addMulZPowInto(p.f, y, matVecMul(lambdaV, vinegar[i]), p.schedule[i][0]);
+    }
+  }
+
+  for (const { i, j, l } of whipPairs(p.k, p.schedule)) {
     for (let idx = 0; idx < p.m; idx++) {
       let acc = 0;
       const rowI = vP1[i][idx];
@@ -384,11 +415,37 @@ export function sign(p: MayoParams, esk: Uint8Array, message: Uint8Array, opts: 
   const p1 = decodeMatrices(v, v, p.m, esk.subarray(p1Off, p1Off + sz.p1Bytes), true);
   const l = decodeMatrices(v, p.o, p.m, esk.subarray(p1Off + sz.p1Bytes), false);
 
+  return signWithMaterial(p, seedSk, o, { p1, l }, message, opts);
+}
+
+/** Round-3 compact signing derives M directly from P1, P2 and O without building L. */
+export function signCompact(p: MayoParams, csk: Uint8Array, message: Uint8Array, opts: SignOptions = {}): SignResult {
+  const sz = sizes(p);
+  if (csk.length !== sz.cskBytes) throw new Error(`csk must be ${sz.cskBytes} bytes for ${p.name}`);
+  const v = p.n - p.o;
+  const expanded = shake256(csk, p.pkSeedBytes + sz.oBytes);
+  const o = decodeO(v, p.o, expanded.subarray(p.pkSeedBytes));
+  const bytes = aes128ctr(expanded.subarray(0, p.pkSeedBytes), sz.p1Bytes + sz.p2Bytes);
+  const p1 = decodeMatrices(v, v, p.m, bytes.subarray(0, sz.p1Bytes), true);
+  const p2 = decodeMatrices(v, p.o, p.m, bytes.subarray(sz.p1Bytes), false);
+  return signWithMaterial(p, csk, o, { p1, p2, o }, message, opts);
+}
+
+function signWithMaterial(
+  p: MayoParams,
+  seedSk: Uint8Array,
+  o: Mat,
+  material: Pick<ExpandedSecretKey, 'p1' | 'l'> | Pick<CompactKeys, 'p1' | 'p2' | 'o'>,
+  message: Uint8Array,
+  opts: SignOptions,
+): SignResult {
+  const sz = sizes(p);
+  const v = p.n - p.o;
   const digest = shake256(message, p.digestBytes);
   const r = opts.r ?? new Uint8Array(sz.rBytes);
   if (r.length !== sz.rBytes) throw new Error(`R must be ${sz.rBytes} bytes for ${p.name}`);
   const salt = shake256(concatBytes(digest, r, seedSk), p.saltBytes);
-  const t = decodeVec(p.m, shake256(concatBytes(digest, salt), sz.mBytes));
+  const { t, lambda } = signingTarget(p, digest, salt);
 
   const attempts: Array<{ ctr: number; rankDeficient: boolean }> = [];
   const oilBytes = Math.ceil((p.k * p.o) / 2);
@@ -405,7 +462,7 @@ export function sign(p: MayoParams, esk: Uint8Array, message: Uint8Array, opts: 
     }
     const rVec = decodeVec(p.k * p.o, vExpanded.subarray(vBytesTotal, vBytesTotal + oilBytes));
 
-    const system = buildWhippedSystem(p, { p1, l }, t, vinegar);
+    const system = buildWhippedSystem(p, material, t, vinegar, lambda ? { lambda, o } : undefined);
     const solved = sampleSolution(system.a, system.y, rVec);
     attempts.push({ ctr, rankDeficient: solved.rankDeficient });
     if (!solved.x) continue;
@@ -428,12 +485,27 @@ export function sign(p: MayoParams, esk: Uint8Array, message: Uint8Array, opts: 
   throw new Error('MAYO.Sign: no solvable system after 256 attempts (should be astronomically unlikely)');
 }
 
+/** The round-3 message target and the linear map expanded from the same hash. */
+function signingTarget(p: MayoParams, digest: Uint8Array, salt: Uint8Array) {
+  const { mBytes } = sizes(p);
+  const hash = shake256(concatBytes(digest, salt), mBytes + (p.schedule ? 32 : 0));
+  const t = decodeVec(p.m, hash);
+  if (!p.schedule) return { t };
+  const bytes = lambdaStream(hash.subarray(mBytes, mBytes + 16), hash.subarray(mBytes + 16), mBytes * p.n);
+  const lambda = mat(p.m, p.n);
+  for (let col = 0; col < p.n; col++) {
+    const values = decodeVec(p.m, bytes.subarray(col * mBytes, (col + 1) * mBytes));
+    for (let row = 0; row < p.m; row++) lambda.d[row * p.n + col] = values[row];
+  }
+  return { t, lambda };
+}
+
 /* ---------- verify ---------- */
 
 export interface VerifyResult {
-  /** True exactly when P*(s) = t. */
+  /** True when the verification equation holds and the encoding is canonical. */
   ok: boolean;
-  /** P*(s), recomputed from the signature and the public key. */
+  /** The public quadratic map plus the round-3 linear term, when applicable. */
   y: Uint8Array;
   /** t, recomputed from the message and the salt in the signature. */
   t: Uint8Array;
@@ -470,9 +542,16 @@ export function verify(
   const s = decodeVec(p.k * p.n, sig);
 
   const digest = shake256(message, p.digestBytes);
-  const t = decodeVec(p.m, shake256(concatBytes(digest, salt), sz.mBytes));
+  const { t, lambda } = signingTarget(p, digest, salt);
 
   const y = evalWhipped(p, assemblePublicMatrices(p, pk), s);
+
+  if (lambda && p.schedule) {
+    for (let i = 0; i < p.k; i++) {
+      const block = s.subarray(i * p.n, (i + 1) * p.n);
+      addMulZPowInto(p.f, y, matVecMul(lambda, block), p.schedule[i][0]);
+    }
+  }
 
   let firstMismatch = -1;
   for (let i = 0; i < p.m; i++) {

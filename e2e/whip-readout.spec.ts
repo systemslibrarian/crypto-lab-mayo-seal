@@ -19,17 +19,17 @@ async function setK(page: import('@playwright/test').Page, k: number): Promise<v
 
 test('the retry figure is always a number, never 2^Infinity', async ({ page }) => {
   await page.goto('');
-  // MAYO2 at k = 6 is the largest figure any stop can reach, and the exact stop
+  // MAYO2 at k = 7 is the largest figure any stop can reach, and the exact stop
   // where the old 1 − product form underflowed to a printed "2^Infinity".
   await page.locator('#wv-params').selectOption('MAYO2');
-  await setK(page, 6);
+  await setK(page, 7);
 
   const readout = page.locator('#wv-readout');
   await expect(readout).toContainText('Room to spare');
   await expect(readout).not.toContainText('Infinity');
   await expect(readout).not.toContainText('too small for this page to print');
   // power() also emits an sr-only reading, which is the exact-match-friendly form.
-  await expect(readout).toContainText('2 to the power 156');
+  await expect(readout).toContainText('2 to the power 112');
 });
 
 test('a short system reports the positive denominator of its hit probability', async ({ page }) => {
@@ -38,10 +38,10 @@ test('a short system reports the positive denominator of its hit probability', a
   await setK(page, 1);
 
   const readout = page.locator('#wv-readout');
-  await expect(readout.locator('.wv-verdict .pow > [aria-hidden="true"]')).toHaveText('16⁷⁰');
+  await expect(readout.locator('.wv-verdict .pow > [aria-hidden="true"]')).toHaveText('16⁷²');
   await expect(readout).toContainText('draws — improbable, not impossible');
-  await expect(readout).toContainText('16 to the power 70');
-  await expect(readout).not.toContainText('16 to the power minus 70');
+  await expect(readout).toContainText('16 to the power 72');
+  await expect(readout).not.toContainText('16 to the power minus 72');
 });
 
 test('the slider never offers a whipping factor MAYO cannot build', async ({ page }) => {
@@ -59,7 +59,7 @@ test('the slider never offers a whipping factor MAYO cannot build', async ({ pag
 
   // MAYO2's window fits well inside its ceiling of 10, so nothing is clipped.
   await page.locator('#wv-params').selectOption('MAYO2');
-  await expect(page.locator('#wv-k')).toHaveAttribute('max', '6');
+  await expect(page.locator('#wv-k')).toHaveAttribute('max', '7');
 });
 
 test('the size trade shows both halves, and only the cost half moves with k', async ({ page }) => {
@@ -67,25 +67,25 @@ test('the size trade shows both halves, and only the cost half moves with k', as
   await page.locator('#wv-params').selectOption('MAYO1');
   const trade = page.locator('#wv-trade');
 
-  // Classic UOV at m = 78 needs o = 78, which is what makes its key enormous.
+  // Classic UOV at m = 80 needs o = 80, which is what makes its key enormous.
   await expect(trade).toContainText('1.4 KB');
-  await expect(trade).toContainText('85× smaller');
-  await expect(trade).toContainText('117 KB');
+  await expect(trade).toContainText('89× smaller');
+  await expect(trade).toContainText('127 KB');
 
   await setK(page, 10);
-  await expect(trade).toContainText('454 B');
+  await expect(trade).toContainText('464 B');
   await setK(page, 12);
-  // The signature grows by ceil(n/2) = 43 B per copy...
-  await expect(trade).toContainText('540 B');
+  // The signature grows by ceil(n/2) = 44 B per copy...
+  await expect(trade).toContainText('552 B');
   // ...while the public key, set by o, does not move at all.
   await expect(trade).toContainText('1.4 KB');
-  await expect(trade).toContainText('85× smaller');
+  await expect(trade).toContainText('89× smaller');
 });
 
 test('MAYO1 explains the E-matrix ceiling when the slider reaches it', async ({ page }) => {
   await page.goto('');
   await page.locator('#wv-params').selectOption('MAYO1');
-  // MAYO1 ships k = 10 and its ceiling is exactly 12: k(k+1)/2 = 78 = m, so the
+  // MAYO1 ships k = 10 and its ceiling is exactly 12: k(k+1)/2 = 78 ≤ m, so the
   // last stop consumes every E matrix the field can supply.
   await expect(page.locator('#wv-k')).toHaveAttribute('max', '12');
 
@@ -93,5 +93,5 @@ test('MAYO1 explains the E-matrix ceiling when the slider reaches it', async ({ 
   await expect(page.locator('#wv-readout')).toContainText(
     'k = 12 is as far as MAYO1 can go',
   );
-  await expect(page.locator('#wv-readout')).toContainText('only m = 78 exist');
+  await expect(page.locator('#wv-readout')).toContainText('only m = 80 exist');
 });

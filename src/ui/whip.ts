@@ -12,11 +12,10 @@
 import { rank, type Mat } from '../mayo/gf16';
 import { PARAM_SETS, sizes, TOY, type MayoParams, type ParamSetName } from '../mayo/params';
 import {
-  assemblePublicMatrices,
-  evalWhipped,
   keypair,
-  sign,
+  signCompact,
   tryUnwhipped,
+  verify,
   type ExpandedPublicKey,
   type ExpandedSecretKey,
   type SignResult,
@@ -110,13 +109,13 @@ export function initWhip(): void {
     const p = PARAM_SETS[setSelect.value as ParamSetName];
     if (state && state.message === msgInput.value && state.p === p) return state;
     const seed = crypto.getRandomValues(new Uint8Array(sizes(p).skSeedBytes));
-    const { sk, pk } = keypair(p, seed);
+    const { keys, sk, pk } = keypair(p, seed);
     state = {
       p,
       message: msgInput.value,
       keys: { sk, pk },
       seed,
-      result: sign(p, sk.esk, new TextEncoder().encode(msgInput.value)),
+      result: signCompact(p, keys.csk, new TextEncoder().encode(msgInput.value)),
       revealed: 0,
     };
     return state;
@@ -251,7 +250,7 @@ function renderBeat(beat: number, s: State): void {
     ]),
     verdict(
       s.verified ? 'ok' : 'bad',
-      s.verified ? 'P*(s) = t — the signature lands exactly on the target' : 'Mismatch — this would be a bug',
+      s.verified ? `${s.p.schedule ? 'P*(s) + linear term' : 'P*(s)'} = t — the signature lands exactly on the target` : 'Mismatch — this would be a bug',
       s.verified
         ? `Elimination found the ${trace.system.a.cols} oil coordinates on draw ${trace.attempts.length}, and the public whipped map evaluated on the assembled signature reproduced t coordinate for coordinate.`
         : 'Signing and verification disagree; please report this.',
@@ -354,7 +353,7 @@ function renderUnwhipped(target: HTMLElement, s: State): void {
 function renderWhip(target: HTMLElement, s: State): void {
   const p = s.p;
   const { vinegar } = s.result.trace;
-  const pairs = whipPairs(p.k);
+  const pairs = whipPairs(p.k, p.schedule);
 
   const vinegarBlock = el('div', {}, [
     el('p', { class: 'field-label', text: `k = ${p.k} independent vinegar vectors` }),
@@ -463,9 +462,7 @@ function renderSolve(target: HTMLElement, s: State): void {
 function renderAssemble(target: HTMLElement, s: State): void {
   const p = s.p;
   const { trace, sig } = s.result;
-  const pMats = assemblePublicMatrices(p, s.keys.pk);
-  const y = evalWhipped(p, pMats, trace.s);
-  const matches = y.every((value, i) => value === trace.t[i]);
+  const { y, t, ok: matches } = verify(p, s.keys.pk, new TextEncoder().encode(s.message), sig);
   // Beat 3 reports this check rather than repeating it.
   s.verified = matches;
 
@@ -489,18 +486,18 @@ function renderAssemble(target: HTMLElement, s: State): void {
   }
 
   target.append(
-    el('p', { class: 'field-label', text: 'P*(s) — the public whipped map, evaluated on the signature' }),
+    el('p', { class: 'field-label', text: `${s.p.schedule ? 'P*(s) + linear term' : 'P*(s)'} — public evaluation` }),
     vectorList(y, {
-      ariaLabel: 'the whipped map evaluated on the signature',
-      cell: (i, value) => (value === trace.t[i] ? 'is-ok' : 'is-bad'),
+      ariaLabel: 'public verification value',
+      cell: (i, value) => (value === t[i] ? 'is-ok' : 'is-bad'),
       maxItems: vecLimit(p),
     }),
     el('p', { class: 'field-label', text: 't — recomputed from the message and salt' }),
-    vectorList(trace.t, { ariaLabel: 'target vector t', maxItems: vecLimit(p) }),
+    vectorList(t, { ariaLabel: 'target vector t', maxItems: vecLimit(p) }),
     compareLegend(),
     verdict(
       matches ? 'ok' : 'bad',
-      matches ? 'P*(s) = t — the signature lands exactly on the target' : 'Mismatch — this would be a bug',
+      matches ? `${s.p.schedule ? 'P*(s) + linear term' : 'P*(s)'} = t — the signature lands exactly on the target` : 'Mismatch — this would be a bug',
       matches
         ? `The whole ${sig.length}-byte signature is ⌈k·n/2⌉ = ${Math.ceil((p.k * p.n) / 2)} bytes of s plus the ${p.saltBytes}-byte salt.`
         : 'Signing and verification disagree; please report this.',

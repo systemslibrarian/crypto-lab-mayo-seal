@@ -13,6 +13,7 @@ import {
   keypair,
   parseExpandedPK,
   sign,
+  signCompact,
   tryUnwhipped,
   verify,
 } from './mayo';
@@ -143,9 +144,14 @@ describe('sign and verify', () => {
 
   it.each([TOY, MAYO2])('$name: signing lands exactly on the target', (p) => {
     const { sk, pk } = keypair(p, seedFor(p, 43));
-    const { trace } = sign(p, sk.esk, enc.encode('on target'));
-    const y = evalWhipped(p, assemblePublicMatrices(p, pk), trace.s);
-    expect(Array.from(y)).toEqual(Array.from(trace.t));
+    const message = enc.encode('on target');
+    const { trace, sig } = sign(p, sk.esk, message);
+    const quadratic = evalWhipped(p, assemblePublicMatrices(p, pk), trace.s);
+    const verified = verify(p, pk, message, sig);
+    expect(verified.y).toEqual(trace.t);
+    expect(verified.ok).toBe(true);
+    if (p === TOY) expect(quadratic).toEqual(trace.t);
+    else expect(quadratic).not.toEqual(trace.t);
   });
 
   it.each([TOY, MAYO2])('$name: rejects a modified message', (p) => {
@@ -275,7 +281,7 @@ describe('sign and verify', () => {
   });
 });
 
-describe('reference known-answer tests (MAYO round-2 submission, KAT/*.rsp)', () => {
+describe('reference known-answer tests (MAYO round-3 submission, KAT/*.rsp)', () => {
   const sets: Array<[MayoParams, keyof typeof katVectors]> = [
     [MAYO1, 'MAYO_1'],
     [MAYO2, 'MAYO_2'],
@@ -299,13 +305,22 @@ describe('reference known-answer tests (MAYO round-2 submission, KAT/*.rsp)', ()
         const msg = hexToBytes(vector.msg);
         expect(msg.length).toBe(vector.mlen);
 
-        const sk = expandSK(p, keys.csk);
-        const { sig } = sign(p, sk.esk, msg, { r });
+        const { sig } = signCompact(p, keys.csk, msg, { r });
+        expect(sign(p, expandSK(p, keys.csk).esk, msg, { r }).sig).toEqual(sig);
         const sm = concatBytes(sig, msg);
         expect(sm.length).toBe(vector.smlen);
         expect(bytesToHex(sm)).toBe(vector.sm.toLowerCase());
 
-        expect(verify(p, expandPK(p, keys.cpk), msg, sig).ok).toBe(true);
+        const pk = expandPK(p, keys.cpk);
+        expect(verify(p, pk, msg, sig).ok).toBe(true);
+        for (const index of [0, sig.length - 1]) {
+          const edited = sig.slice();
+          edited[index] ^= 1;
+          expect(verify(p, pk, msg, edited).ok).toBe(false);
+        }
+        const editedMessage = msg.slice();
+        editedMessage[0] ^= 1;
+        expect(verify(p, pk, editedMessage, sig).ok).toBe(false);
       });
     }
   }

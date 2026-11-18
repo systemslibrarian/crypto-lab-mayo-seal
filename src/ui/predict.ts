@@ -40,16 +40,16 @@ const PREDICTIONS: Prediction[] = [
   {
     mount: 'pr-threshold',
     question:
-      'At k = 1 a MAYO1 signer has 8 oil unknowns for 78 equations. Can it hit a random target t?',
+      'At k = 1 a MAYO1 signer has 8 oil unknowns for 80 equations. Can it hit a random target t?',
     options: [
       {
         text: 'No — it is mathematically impossible.',
         correct: false,
         why:
-          'Improbable, not impossible. Eight unknowns still reach a 16⁸ slice of the 16⁷⁸ possible targets, so a random t lands inside it about once in 16⁷⁰ draws. The threshold below is a parameter-design condition, not a theorem — which is why the figure says "usually out of reach" rather than "cannot".',
+          'Improbable, not impossible. Eight unknowns still reach a 16⁸ slice of the 16⁷⁸ possible targets, so a random t lands inside it about once in 16⁷² draws. The threshold below is a parameter-design condition, not a theorem — which is why the figure says "usually out of reach" rather than "cannot".',
       },
       {
-        text: 'Almost never — roughly once in 16⁷⁰ draws.',
+        text: 'Almost never — roughly once in 16⁷² draws.',
         correct: true,
         why:
           'Right, and the "almost" is load-bearing. k·o > m is chosen to make a good draw overwhelmingly likely, not to make a bad one impossible. Turn the slider to k = 1 and the figure reports this same number.',
@@ -58,7 +58,7 @@ const PREDICTIONS: Prediction[] = [
         text: 'Yes — the secret trapdoor reaches any target.',
         correct: false,
         why:
-          'The trapdoor makes the system linear, which is what lets the signer solve by elimination at all. It does not manufacture unknowns. With 8 of them against 78 equations there is simply not enough freedom, trapdoor or no trapdoor.',
+          'The trapdoor makes the system linear, which is what lets the signer solve by elimination at all. It does not manufacture unknowns. With 8 of them against 80 equations there is simply not enough freedom, trapdoor or no trapdoor.',
       },
     ],
   },
@@ -89,7 +89,7 @@ const PREDICTIONS: Prediction[] = [
   {
     mount: 'pr-salt',
     question:
-      'Verification recomputes t from the message and salt, then evaluates the public map on s. Flip one bit of the salt: which side moves?',
+      'In the toy set, verification recomputes t from the message and salt, then evaluates the public map on s. Flip one bit of the salt: which side moves?',
     options: [
       {
         text: 'The target t.',

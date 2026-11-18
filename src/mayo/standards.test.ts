@@ -21,12 +21,12 @@ import indexHtml from '../../index.html?raw';
  * (1168 B / 321 B) in src/data.test.ts, which is the independent cross-check.
  *
  * These assertions pin the document identification, because the parameter
- * labels this lab runs (round-2, asserted in params.ts and mayo.test.ts) are
+ * labels this lab runs (round-3, asserted in params.ts and mayo.test.ts) are
  * only defensible if the round they are NOT is named correctly.
  */
 describe('the round-3 MAYO specification is identified correctly', () => {
   it('names the round-3 MAYO1 parameters from the submission package', () => {
-    expect(readme).toMatch(/n = 88, m = 80, o = 8, k = 10/);
+    expect(readme).toMatch(/\| MAYO1 \| 88 \| 80 \| 8 \| 10 \| 1456 \| 464 \|/);
     expect(readme).toMatch(/1456-byte public key/);
     expect(readme).toMatch(/464-byte signature/);
   });
@@ -46,8 +46,8 @@ describe('the round-3 MAYO specification is identified correctly', () => {
     expect(readme).not.toMatch(/now carries the round-3 parameter tables/);
   });
 
-  it('keeps the round-2 label on the parameters this lab actually implements', () => {
-    expect(readme).toMatch(/this lab implements the round-2 sets/);
+  it('keeps the round-3 label on the parameters this lab actually implements', () => {
+    expect(readme).toMatch(/This lab implements the round-3 sets/);
   });
 });
 

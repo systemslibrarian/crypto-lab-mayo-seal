@@ -211,7 +211,7 @@
                 <label for="wv-params">Parameter set</label>
                 <select id="wv-params">
                   <option value="TOY" selected>TOY — m = 6, o = 3</option>
-                  <option value="MAYO1">MAYO1 — m = 78, o = 8</option>
+                  <option value="MAYO1">MAYO1 — m = 80, o = 8</option>
                   <option value="MAYO2">MAYO2 — m = 64, o = 17</option>
                   <option value="MAYO3">MAYO3 — m = 108, o = 10</option>
                   <option value="MAYO5">MAYO5 — m = 142, o = 12</option>
@@ -342,10 +342,10 @@
             <label for="kg-params">Parameter set</label>
             <select id="kg-params">
               <option value="TOY" selected>TOY — n=9, m=6, o=3, k=3 (small enough to read)</option>
-              <option value="MAYO1">MAYO1 — n=86, m=78, o=8, k=10 (round-2 claimed NIST level 1, small key)</option>
-              <option value="MAYO2">MAYO2 — n=81, m=64, o=17, k=4 (round-2 claimed NIST level 1, small signature)</option>
-              <option value="MAYO3">MAYO3 — n=118, m=108, o=10, k=11 (round-2 claimed NIST level 3)</option>
-              <option value="MAYO5">MAYO5 — n=154, m=142, o=12, k=12 (round-2 claimed NIST level 5)</option>
+              <option value="MAYO1">MAYO1 — n=88, m=80, o=8, k=10 (round-3 claimed NIST level 1, small key)</option>
+              <option value="MAYO2">MAYO2 — n=86, m=64, o=13, k=5 (round-3 claimed NIST level 1, small signature)</option>
+              <option value="MAYO3">MAYO3 — n=118, m=108, o=10, k=11 (round-3 claimed NIST level 3)</option>
+              <option value="MAYO5">MAYO5 — n=154, m=142, o=12, k=12 (round-3 claimed NIST level 5)</option>
             </select>
           </div>
           <div class="field field--grow">
@@ -376,7 +376,7 @@
             <label for="whip-params">Walkthrough parameter set</label>
             <select id="whip-params">
               <option value="TOY" selected>TOY — 6 equations, 3 unknowns per copy</option>
-              <option value="MAYO1">MAYO1 — 78 equations, 8 per copy, k = 10</option>
+              <option value="MAYO1">MAYO1 — 80 equations, 8 per copy, k = 10</option>
               <option value="MAYO2">MAYO2 — 64 equations, 17 per copy, k = 4</option>
             </select>
           </div>
@@ -423,8 +423,7 @@
               <span class="beat__state" id="whip-beat-state-3">Waiting</span>
             </div>
             <p class="beat__lede">
-              Now elimination finds oil coordinates, the signature is assembled from them, and the public whipped map
-              evaluated on that signature lands exactly on the target the message hashed to.
+              Now elimination finds oil coordinates, the signature is assembled from them, and verification checks that the public evaluation equals the target.
             </p>
             <div class="beat__body" id="whip-beat-body-3"></div>
           </li>
@@ -445,7 +444,7 @@
               <span class="step__state" id="whip-state-1">Waiting</span>
             </div>
             <div class="step__body" id="whip-body-1">
-              <p>The salt and the target both come from SHAKE256. A signature is valid exactly when the whipped map lands on this t.</p>
+              <p>The salt and the target both come from SHAKE256. Verification compares the public evaluation with this t.</p>
             </div>
           </li>
           <li class="step" id="whip-step-2" data-state="idle">
@@ -491,7 +490,7 @@
               <span class="step__state" id="whip-state-5">Waiting</span>
             </div>
             <div class="step__body" id="whip-body-5">
-              <p>Each block is sᵢ = (vᵢ + O·xᵢ ‖ xᵢ). Evaluating the public whipped map on s must reproduce t exactly.</p>
+              <p>Each block is sᵢ = (vᵢ + O·xᵢ ‖ xᵢ). The public evaluation of s, including the linear term for round 3, must reproduce t exactly.</p>
             </div>
           </li>
         </ol>
@@ -502,7 +501,7 @@
         <p class="kicker">Exhibit 3 — break it yourself</p>
         <h2 id="verify-h">Verify: compute both sides, then try to fool it</h2>
         <p class="lede">
-          Verification recomputes t from the message and salt, evaluates the public whipped map on the signature, and
+          Verification recomputes t from the message and salt, evaluates the public verification expression on the signature, and
           compares the two vectors coordinate by coordinate. Nothing is asserted here — both sides are shown. Then
           tamper with any input you like and watch the real verifier answer.
         </p>
@@ -512,7 +511,7 @@
             <label for="vf-params">Parameter set</label>
             <select id="vf-params">
               <option value="TOY" selected>TOY — every coordinate visible</option>
-              <option value="MAYO1">MAYO1 — real, 78 coordinates</option>
+              <option value="MAYO1">MAYO1 — real, 80 coordinates</option>
               <option value="MAYO2">MAYO2 — real, 64 coordinates</option>
               <option value="MAYO3">MAYO3 — real, 108 coordinates</option>
               <option value="MAYO5">MAYO5 — real, 142 coordinates</option>
@@ -554,7 +553,7 @@
             <label for="fg-params">Parameter set</label>
             <select id="fg-params">
               <option value="TOY" selected>TOY — m = 6, so a guess needs 16⁶</option>
-              <option value="MAYO1">MAYO1 — m = 78, so a guess needs 16⁷⁸</option>
+              <option value="MAYO1">MAYO1 — m = 80, so a guess needs 16⁸⁰</option>
               <option value="MAYO2">MAYO2 — m = 64, so a guess needs 16⁶⁴</option>
             </select>
           </div>
@@ -594,7 +593,7 @@
           <a href="https://eprint.iacr.org/2026/2247">Geometric Forgeries (September 30, 2026)</a>
           estimates round-2 MAYO1 at 128 bits of work, below its 143-bit level-I comparator,
           and MAYO3 at 207 bits. These are heuristic estimates in a preprint, not a practical
-          full-size forgery demonstration. This page retains historical round-2 parameters;
+          full-size forgery demonstration. The lab runs the round-3 parameters;
           the levels above are submission claims. Round-3 revisions do not establish security here.
         </p>
         <p class="lede" id="mayo-schur-update">
@@ -603,7 +602,7 @@
           (revised 16 November 2026) report lower attack-cost estimates for selected additional
           Round-3 MAYO parameter sets. This preprint relies on conjectural Hilbert-series and
           structured-rank predictions; it does not demonstrate production-key recovery.
-          Those estimates do not establish the security of the historical Round-2 sets run here.
+          Those estimates do not establish the security of the Round-3 sets run here.
           This demo does not execute the new attack.
         </p>
         <div id="ledger-tradeoff"></div>
@@ -622,7 +621,7 @@
         <h2 id="real-h">The real thing: reference vectors and preconditions, checked here</h2>
         <p class="lede">
           The same code that drives the toy exhibits runs the shipped MAYO parameter sets. Pick a vector from the
-          round-2 submission's KAT files: the page seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does,
+          round-3 submission's KAT files: the page seeds NIST's AES-256-CTR-DRBG exactly as the KAT harness does,
           derives the keypair and the signature, and compares its own bytes against the reference hex.
         </p>
 
@@ -693,8 +692,8 @@
           <div class="card">
             <h3>4 · The cost</h3>
             <p>
-              A compact public key, paid for with a longer signature: k blocks of n field elements instead of one. Each
-              shipped set picks the smallest k with k·o &gt; m, so it buys room and nothing more.
+              A compact public key comes at the cost of a longer signature, with k blocks of n field elements. Each
+              round-3 set picks the smallest k with k·o ≥ m. MAYO1 gives a square system.
             </p>
           </div>
         </div>

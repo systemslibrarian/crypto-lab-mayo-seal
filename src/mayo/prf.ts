@@ -13,7 +13,7 @@
  * hand-rolled; these two are standard building blocks, so a library is right.
  */
 import { shake256 as nobleShake256 } from '@noble/hashes/sha3.js';
-import { ctr } from '@noble/ciphers/aes.js';
+import { ctr, ecb } from '@noble/ciphers/aes.js';
 
 export function shake256(input: Uint8Array, outLen: number): Uint8Array {
   return nobleShake256(input, { dkLen: outLen });
@@ -29,4 +29,17 @@ export function aes128ctr(seed: Uint8Array, outLen: number): Uint8Array {
   const blocks = Math.ceil(outLen / 16) * 16;
   const stream = ctr(seed, new Uint8Array(16)).encrypt(new Uint8Array(blocks));
   return stream.subarray(0, outLen);
+}
+
+// Round-3 Lambda expansion uses AES on IV XOR a big-endian block index.
+export function lambdaStream(key: Uint8Array, iv: Uint8Array, length: number): Uint8Array {
+  const blocks = new Uint8Array(Math.ceil(length / 16) * 16);
+  for (let offset = 0; offset < blocks.length; offset += 16) {
+    blocks.set(iv, offset);
+    const index = offset / 16;
+    for (let byte = 0; byte < 4; byte++) {
+      blocks[offset + 15 - byte] ^= (index >>> (8 * byte)) & 255;
+    }
+  }
+  return ecb(key, { disablePadding: true }).encrypt(blocks).subarray(0, length);
 }

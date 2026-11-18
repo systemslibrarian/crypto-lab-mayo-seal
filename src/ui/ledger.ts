@@ -38,7 +38,7 @@ function renderUovTable(): HTMLElement {
   for (const p of SETS) {
     const c = compareWithUov(p);
     const row = el('tr', {}, [
-      el('th', { scope: 'row', text: `${p.name} (round-2 claimed level ${p.securityLevel})` }),
+      el('th', { scope: 'row', text: `${p.name} (round-3 claimed level ${p.securityLevel})` }),
       el('td', { class: 'numeric', text: `${p.n}, ${p.m}, ${p.o}, ${p.k}` }),
       el('td', { class: 'numeric', text: formatBytes(c.mayo.pk) }),
       el('td', { class: 'numeric', text: formatBytes(c.uov.pk) }),
@@ -53,7 +53,7 @@ function renderUovTable(): HTMLElement {
 
   const note = el('p', {
     class: 'note',
-    text: 'The unwhipped column is MAYO’s own size formula with o = m, not a quote from the UOV submission — it isolates the cost of the whipping and nothing else. The MAYO spec makes the same point for the (81, 64, 17, 4) set: about a 14-fold smaller public key than compressed Oil-and-Vinegar at the same claimed submission level, for roughly twice the signature.',
+    text: 'The unwhipped column is MAYO’s own size formula with o = m, not a quote from the UOV submission — it isolates the cost of the whipping and nothing else. The historical round-2 specification makes the same point for its (81, 64, 17, 4) set: about a 14-fold smaller public key than compressed Oil-and-Vinegar at the same claimed submission level, for roughly twice the signature.',
   });
   return el('div', {}, [scroller('MAYO versus the unwhipped map', table), note]);
 }
@@ -94,7 +94,7 @@ function renderTradeoffNote(): HTMLElement {
   return el('p', {
     class: 'note',
     text:
-      `★ marks the two sets that are actually implemented (MAYO1 and MAYO2). ` +
+      `★ marks the historical round-2 MAYO1 and MAYO2 rows. ` +
       `${odd.length} rows differ from the printed signature size by one byte: their n·k is odd, and ⌈n·k/2⌉ nibbles will not fit in ⌊n·k/2⌋ bytes. ` +
       `We show our own figure rather than quietly matching the table.`,
   });

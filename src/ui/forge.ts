@@ -117,7 +117,7 @@ function renderGuess(p: MayoParams, result: GuessResult): HTMLElement {
 
   const best = el('div', { class: 'card' }, [
     el('h3', { text: `The closest guess (attempt ${result.bestAttempt + 1})` }),
-    el('p', { class: 'field-label', text: 'P*(s) for the guessed signature' }),
+    el('p', { class: 'field-label', text: 'Public verification value for the guessed signature' }),
     vectorList(result.bestY, {
       ariaLabel: 'the whipped map evaluated on the best guess',
       maxItems: 80,
@@ -172,7 +172,7 @@ function renderOilAttempt(p: MayoParams, attempt: OilSpaceAttempt): HTMLElement 
       : 'The control failed, which would be a bug'
     : ok
       ? 'ALARM — a wrong oil space produced a signature the verifier accepted'
-      : `Forgery rejected — P*(s) ≠ t, first difference at coordinate ${attempt.result.firstMismatch}`;
+      : `Forgery rejected — public evaluation ≠ t, first difference at coordinate ${attempt.result.firstMismatch}`;
 
   const detail = isControl
     ? 'This is the control: identical code, identical key material, only the genuine O. It proves the failures above come from the oil space and nothing else.'
@@ -188,7 +188,7 @@ function renderOilAttempt(p: MayoParams, attempt: OilSpaceAttempt): HTMLElement 
       { label: 'verifier says', value: ok ? 'valid' : 'invalid' },
       { label: 'coordinates wrong', value: `${countMismatches(attempt.result.y, attempt.result.t)} of ${p.m}` },
     ]),
-    el('p', { class: 'field-label', text: 'P*(s) — from the signature this attempt produced' }),
+    el('p', { class: 'field-label', text: 'Public verification value for this signature' }),
     vectorList(attempt.result.y, {
       ariaLabel: 'the whipped map evaluated on the forged signature',
       maxItems: 80,
